@@ -119,6 +119,23 @@ final class HexGridCoreTests: XCTestCase {
         XCTAssertTrue(HexGrid.polygons(n: 0, inWidth: 100, height: 100).isEmpty)
     }
 
+    // MARK: Boustrophedon traversal
+
+    func testBoustrophedonCoversAllCellsWithNeighborSteps() {
+        let g = HexGrid(n: 4, radius: 1)
+        let path = g.cellsBoustrophedon()
+        // Every cell exactly once.
+        XCTAssertEqual(Set(path.map { "\($0.q),\($0.r)" }).count, g.cellCount)
+        // Each consecutive pair must be axial neighbors (share an edge).
+        let neighbors: [(Int, Int)] = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, -1), (-1, 1)]
+        for i in 1..<path.count {
+            let dq = path[i].q - path[i - 1].q
+            let dr = path[i].r - path[i - 1].r
+            XCTAssertTrue(neighbors.contains { $0.0 == dq && $0.1 == dr },
+                          "step \(i - 1)→\(i) (\(path[i - 1])→\(path[i])) is not a neighbor")
+        }
+    }
+
     // MARK: Perimeter edges
 
     func testPerimeterEdgesSingleHexHasSix() {

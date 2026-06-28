@@ -47,6 +47,24 @@ public struct HexGrid {
         return out
     }
 
+    /// Boustrophedon (snake) traversal: same rows as `cells()`, but each row's
+    /// direction alternates so the end of one row is a visual neighbor of the
+    /// start of the next (down-left as rows widen, down-right as they narrow).
+    /// Every consecutive pair of cells therefore shares an edge — no leaps.
+    public func cellsBoustrophedon() -> [(q: Int, r: Int)] {
+        let k = n - 1
+        guard k >= 0 else { return [] }
+        var out: [(q: Int, r: Int)] = []
+        out.reserveCapacity(cellCount)
+        for row in 0...2 * k {
+            let r = row - k
+            let qs = Array(max(-k, -k - r)...min(k, k - r))
+            let ordered = row % 2 == 0 ? qs : Array(qs.reversed())
+            for q in ordered { out.append((q, r)) }
+        }
+        return out
+    }
+
     public func center(q: Int, r: Int, originX: Double = 0, originY: Double = 0) -> HexPoint {
         HexPoint(originX + radius * Self.sqrt3 * (Double(q) + Double(r) / 2),
                  originY + radius * 1.5 * Double(r))

@@ -9,6 +9,8 @@ import SwiftUI
 struct HexGridEntryView: View {
 
     let n: Int
+    private let order: [(q: Int, r: Int)]          // row-major: 4,5,6,7,6,5,4 …
+    private let cellIndex: [String: Int]           // "q,r" → traversal index
     @State private var letters: [String]
     @State private var clues: [String]
     @FocusState private var focused: Int?
@@ -16,13 +18,14 @@ struct HexGridEntryView: View {
     init(n: Int) {
         self.n = n
         let g = HexGrid(n: n, radius: 1)
-        _letters = State(initialValue: Array(repeating: "", count: g.cellCount))
+        let cells = g.cellsBoustrophedon()
+        self.order = cells
+        self.cellIndex = Dictionary(uniqueKeysWithValues: cells.enumerated().map { ("\($1.q),\($1.r)", $0) })
+        _letters = State(initialValue: Array(repeating: "", count: cells.count))
         _clues = State(initialValue: g.perimeterEdges()
             .filter { $0.edge == 2 || $0.edge == 4 }
             .map { Self.randomString(g.rowLength(of: $0)) })
     }
-
-    private var order: [(q: Int, r: Int)] { HexGrid(n: n, radius: 1).cells() }
 
     var body: some View {
         GeometryReader { p in
@@ -59,7 +62,6 @@ struct HexGridEntryView: View {
     private func labels(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
         let edges = grid.perimeterEdges(originX: w / 2, originY: h / 2)
             .filter { $0.edge == 2 || $0.edge == 4 }
-        let idxMap = Dictionary(uniqueKeysWithValues: order.enumerated().map { ("\($1.q),\($1.r)", $0) })
         let off = s * 1.0
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
             ClueLabel(
@@ -68,18 +70,18 @@ struct HexGridEntryView: View {
                 position: CGPoint(x: CGFloat(e.midpoint.x + e.outward.x * off),
                                   y: CGFloat(e.midpoint.y + e.outward.y * off)),
                 rotation: Self.baselineAngle(e.outward),
-                solved: isSolved(grid, edge: e, at: idx, idxMap: idxMap))
+                solved: isSolved(grid, edge: e, at: idx))
         }
     }
 
     /// True when every cell in the edge's row holds its matching clue letter.
-    private func isSolved(_ grid: HexGrid, edge: PerimeterEdge, at idx: Int, idxMap: [String: Int]) -> Bool {
+    private func isSolved(_ grid: HexGrid, edge: PerimeterEdge, at idx: Int) -> Bool {
         guard idx < clues.count else { return false }
         let clue = clues[idx]
         let cells = grid.rowCells(for: edge)
         guard cells.count == clue.count else { return false }
         for (cell, ch) in zip(cells, clue) {
-            guard let i = idxMap["\(cell.q),\(cell.r)"], i < letters.count, letters[i] == String(ch) else { return false }
+            guard let i = cellIndex["\(cell.q),\(cell.r)"], i < letters.count, letters[i] == String(ch) else { return false }
         }
         return true
     }
@@ -150,7 +152,7 @@ private struct HexCell: View {
             .focusable()
             .focusEffectDisabled()
             .focused(focus, equals: index)
-            .onKeyPress(action: onKey)
+            .onKeyPress(phases: .down, action: onKey)
             .position(position)
     }
 }

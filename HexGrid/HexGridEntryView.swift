@@ -149,10 +149,12 @@ private struct HexCell: View {
         Text(letter)
             .font(.system(size: size, weight: .medium, design: .monospaced))
             .frame(width: w, height: h)
+            .contentShape(Rectangle())                 // make the whole frame tappable
             .focusable()
             .focusEffectDisabled()
             .focused(focus, equals: index)
             .onKeyPress(phases: .down, action: onKey)
+            .onTapGesture { focus.wrappedValue = index }   // click/tap → jump focus here
             .position(position)
     }
 }

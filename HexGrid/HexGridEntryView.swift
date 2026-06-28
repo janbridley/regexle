@@ -4,6 +4,13 @@ import SwiftUI
     import HexGridCore
 #endif
 
+// MARK: - Palette
+private let focusOutline = Color(red: 0xF9 / 255, green: 0xF8 / 255, blue: 0x71 / 255)  // #71618D — focused cell
+private let rowMateFill  = Color(red: 0xAF / 255, green: 0xA8 / 255, blue: 0xBA / 255)  // #AFA8BA — row-mate highlight
+private let hexOutline   = Color(red: 0.6, green: 0.6, blue: 0.6)                        // inactive hex stroke
+private let solvedColor  = Color(red: 0x00 / 255, green: 0xC9 / 255, blue: 0xA4 / 255)  // #00C9A4 — solved clue
+private let clueColor    = Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255)  // #4A4453 — clue text
+
 /// Single-letter entry grid with clue strings on perimeter edges {0, 2, 4}.
 /// Type to advance, Backspace to step back.
 struct HexGridEntryView: View {
@@ -66,16 +73,16 @@ struct HexGridEntryView: View {
             for i in highlight {
                 mates.addPath(hexPath(order[i], grid, w / 2, h / 2))
             }
-            ctx.fill(mates, with: .color(Color.gray.opacity(0.25)))
+            ctx.fill(mates, with: .color(rowMateFill))
             var inactive = Path()
             for (i, c) in order.enumerated() {
                 let hex = hexPath(c, grid, w / 2, h / 2)
                 if i == focused {
-                    ctx.stroke(hex, with: .color(.accentColor),
+                    ctx.stroke(hex, with: .color(focusOutline),
                                style: StrokeStyle(lineWidth: max(1.5, s * 0.04), lineCap: .round, lineJoin: .round))
                 } else { inactive.addPath(hex) }
             }
-            ctx.stroke(inactive, with: .color(Color(red: 0.6, green: 0.6, blue: 0.6)),
+            ctx.stroke(inactive, with: .color(hexOutline),
                        style: StrokeStyle(lineWidth: max(0.5, s * 0.018), lineCap: .round, lineJoin: .round))
         }
     }
@@ -205,7 +212,7 @@ private struct ClueLabel: View {
     var body: some View {
         Text(text)
             .font(.system(size: size, weight: solved ? .bold : .regular, design: .monospaced))
-            .foregroundStyle(solved ? Color(red: 0, green: 0xC9 / 255, blue: 0xA4 / 255) : Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255))
+            .foregroundStyle(solved ? solvedColor : clueColor)
             .rotationEffect(.degrees(rotation))
             .position(position)
     }

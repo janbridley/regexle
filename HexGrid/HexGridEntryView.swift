@@ -158,7 +158,7 @@ struct HexGridEntryView: View {
     private static func assignClueEdges(_ perims: [PerimeterEdge]) -> [PerimeterEdge] {
         var out: [PerimeterEdge] = []
         var seen = Set<String>()
-        for priority in [2, 4, 0] {
+        for priority in [0, 4, 2] {
             for e in perims where e.edge == priority {
                 if seen.insert("\(e.q),\(e.r)").inserted { out.append(e) }
             }

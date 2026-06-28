@@ -9,6 +9,7 @@
 		F1F1F1F1F1F1F1F1F1F10001 /* HexGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */; };
 		F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */; };
 		F1F1F1F1F1F1F1F1F1F10003 /* HexGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10003 /* HexGridView.swift */; };
+		F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */; };
 		F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */; };
 /* End PBXBuildFile section */
 
@@ -17,6 +18,7 @@
 		E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridApp.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10003 /* HexGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridView.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridEntryView.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGrid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -54,6 +56,7 @@
 				E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */,
 				E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */,
 				E1E1E1E1E1E1E1E1E1E10003 /* HexGridView.swift */,
+				E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */,
 			);
 			path = HexGrid;
 			sourceTree = "<group>";
@@ -137,6 +140,7 @@
 				F1F1F1F1F1F1F1F1F1F10001 /* HexGridApp.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10003 /* HexGridView.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

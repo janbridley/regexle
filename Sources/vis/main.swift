@@ -1,8 +1,8 @@
-import Foundation
 import CoreGraphics
+import Foundation
+import HexGridCore
 import ImageIO
 import UniformTypeIdentifiers
-import HexGridCore
 
 // Parse CLI args: --n <int> --size <px> --scale <float> --out <path>
 func value(for flag: String, fallback: String) -> String {
@@ -13,28 +13,30 @@ func value(for flag: String, fallback: String) -> String {
     return fallback
 }
 
-let n      = Int(value(for: "--n",    fallback: "4"))     ?? 4
-let size   = Int(value(for: "--size", fallback: "800"))   ?? 800
-let scale  = Double(value(for: "--scale", fallback: "2")) ?? 2
-let outArg = value(for: "--out",   fallback: "out/grid.png")
+let n = Int(value(for: "--n", fallback: "4")) ?? 4
+let size = Int(value(for: "--size", fallback: "800")) ?? 800
+let scale = Double(value(for: "--scale", fallback: "2")) ?? 2
+let outArg = value(for: "--out", fallback: "out/grid.png")
 
 // CoreGraphics speaks CGFloat; keep all CG math in CGFloat and convert the
 // Double-based geometry at the boundary.
-let width  = CGFloat(size)
+let width = CGFloat(size)
 let height = CGFloat(size)
 let canvasW = width * CGFloat(scale)
 let canvasH = height * CGFloat(scale)
 
 let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
-guard let ctx = CGContext(
-    data: nil,
-    width:  Int(canvasW),
-    height: Int(canvasH),
-    bitsPerComponent: 8,
-    bytesPerRow: 0,
-    space: colorSpace,
-    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-) else {
+guard
+    let ctx = CGContext(
+        data: nil,
+        width: Int(canvasW),
+        height: Int(canvasH),
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    )
+else {
     FileHandle.standardError.write("error: could not create bitmap context\n".data(using: .utf8)!)
     exit(1)
 }
@@ -63,8 +65,7 @@ for hex in grid.hexagons(inWidth: Double(width), height: Double(height)) {
     ctx.beginPath()
     for (i, p) in hex.enumerated() {
         let point = CGPoint(x: CGFloat(p.x), y: CGFloat(p.y))
-        if i == 0 { ctx.move(to: point) }
-        else      { ctx.addLine(to: point) }
+        if i == 0 { ctx.move(to: point) } else { ctx.addLine(to: point) }
     }
     ctx.closePath()
     ctx.strokePath()
@@ -81,9 +82,11 @@ try? FileManager.default.createDirectory(
     withIntermediateDirectories: true
 )
 
-guard let destination = CGImageDestinationCreateWithURL(
-    outURL as CFURL, UTType.png.identifier as CFString, 1, nil
-) else {
+guard
+    let destination = CGImageDestinationCreateWithURL(
+        outURL as CFURL, UTType.png.identifier as CFString, 1, nil
+    )
+else {
     FileHandle.standardError.write("error: could not create image file\n".data(using: .utf8)!)
     exit(1)
 }

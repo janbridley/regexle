@@ -27,6 +27,7 @@ let package = Package(
             path: ".",
             sources: [
                 "HexGrid/HexGridView.swift",
+                "HexGrid/HexGridEntryView.swift",
                 "HexGrid/ContentView.swift",
                 "Sources/macApp",
             ]

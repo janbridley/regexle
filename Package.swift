@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "HexGrid",
-    platforms: [.iOS(.v16), .macOS(.v13)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "HexGridCore", targets: ["HexGridCore"]),
         .executable(name: "vis", targets: ["vis"]),

@@ -99,12 +99,10 @@ struct HexGridEntryView: View {
     /// Single-letter entry + navigation. Returns `.handled` when we consume the
     /// key, `.ignored` to let it pass through (and be ignored by the empty cell).
     private func handle(_ press: KeyPress, at i: Int) -> KeyPress.Result {
-        // TEMP DEBUG — shows what each key produces; remove once backspace works.
-        print("DEBUG key=\(press.key.character) chars=\(press.characters.debugDescription)")
-
         // Backspace (⌫) or forward-delete (⌦): clear current; if already empty,
-        // step back and clear the previous cell. Match the named KeyEquivalent
-        // OR the raw control chars, since backspace may arrive as \u{8}.
+        // step back and clear the previous cell. The key can arrive as the named
+        // KeyEquivalent or as a raw control char (\u{8} BS / \u{7F} DEL), so we
+        // accept any of them.
         let isDelete = press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
         if isDelete {
@@ -159,7 +157,7 @@ private struct HexCell: View {
 
     var body: some View {
         Text(letter)
-            .font(.system(size: fontSize, weight: .medium, design: .rounded))
+            .font(.system(size: fontSize, weight: .medium, design: .monospaced))
             .foregroundStyle(.primary)
             .frame(width: cellW, height: cellH)
             .focusable()

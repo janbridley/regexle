@@ -30,7 +30,15 @@ struct HexGridEntryView: View {
     var body: some View {
         GeometryReader { p in
             let w = Double(p.size.width), h = Double(p.size.height)
-            let s = HexGrid.radiusFitting(n: n, width: w, height: h)
+            // Fit the cluster plus s-scaled clearance so the outward clue labels
+            // (top / left / upper-right) aren't clipped at the frame edge.
+            // Clearance must hold the longest clue (≈ 0.6·n radii out from the
+            // edge) plus a small buffer, so far ends aren't clipped.
+            let clearance = 0.6 * Double(n) + 0.5
+            let s = max(0, Swift.min(
+                w / (HexGrid.sqrt3 * Double(2 * n - 1) + 2 * clearance),
+                h / (Double(3 * n - 1) + 2 * clearance)
+            ))
             let grid = HexGrid(n: n, radius: s)
             ZStack {
                 outlines(grid, w, h, s, highlight: rowMates(of: focused))
@@ -73,21 +81,32 @@ struct HexGridEntryView: View {
         }
     }
 
-    /// N-char clue strings on the left (edge 2, horizontal) and upper-right
-    /// (edge 4) edges, each offset outward along its normal and tilted to match.
+    /// Clue strings on the left (edge 2, horizontal) and upper-right (edge 4)
+    /// edges. Each label's NEAR edge is pinned exactly one character from the
+    /// hex edge — independent of string length — by pushing the center past the
+    /// edge by `gap + halfWidth`, so the half that reaches back toward the hex
+    /// lands at a fixed `gap`.
     private func labels(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
         let edges = grid.perimeterEdges(originX: w / 2, originY: h / 2)
             .filter { $0.edge == 2 || $0.edge == 4 }
-        let off = s * 1.0
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
-            ClueLabel(
-                text: idx < clues.count ? clues[idx] : "",
-                size: CGFloat(s * 0.5),
-                position: CGPoint(x: CGFloat(e.midpoint.x + e.outward.x * off),
-                                  y: CGFloat(e.midpoint.y + e.outward.y * off)),
-                rotation: Self.baselineAngle(e.outward),
-                solved: isSolved(grid, edge: e, at: idx))
+            clueLabel(grid, e, idx, s)
         }
+    }
+
+    private func clueLabel(_ grid: HexGrid, _ e: PerimeterEdge, _ idx: Int, _ s: Double) -> ClueLabel {
+        let fontSize = s * 0.5
+        let charAdvance = 0.6 * fontSize          // monospace glyph advance (≈ SF Mono)
+        let clue = idx < clues.count ? clues[idx] : ""
+        // gap (1 char) + half the text width → near edge sits exactly 1 char out.
+        let off = charAdvance * (1 + Double(clue.count) / 2)
+        return ClueLabel(
+            text: clue,
+            size: CGFloat(fontSize),
+            position: CGPoint(x: CGFloat(e.midpoint.x + e.outward.x * off),
+                              y: CGFloat(e.midpoint.y + e.outward.y * off)),
+            rotation: Self.baselineAngle(e.outward),
+            solved: isSolved(grid, edge: e, at: idx))
     }
 
     /// True when every cell in the edge's row holds its matching clue letter.

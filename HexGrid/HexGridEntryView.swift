@@ -151,19 +151,12 @@ struct HexGridEntryView: View {
         return String((0..<length).map { _ in a.randomElement()! })
     }
 
-    /// One clue per outer cell: assign each boundary cell its highest-priority
-    /// perimeter edge among {2, 4, 0}, so corner cells (in two edge sets) get
-    /// exactly one clue. Covers left/upper-left (2), top/right (4), and
-    /// bottom/lower-right (0).
+    /// One clue per perimeter edge among {0, 2, 4} — left/upper-left (2),
+    /// top/upper-right (4), bottom/lower-right (0). The three "mixed" corners
+    /// where two of these directions meet carry TWO clues (one per side), so
+    /// every side of the cluster is fully labeled.
     private static func assignClueEdges(_ perims: [PerimeterEdge]) -> [PerimeterEdge] {
-        var out: [PerimeterEdge] = []
-        var seen = Set<String>()
-        for priority in [0, 4, 2] {
-            for e in perims where e.edge == priority {
-                if seen.insert("\(e.q),\(e.r)").inserted { out.append(e) }
-            }
-        }
-        return out
+        perims.filter { $0.edge == 0 || $0.edge == 2 || $0.edge == 4 }
     }
 
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {

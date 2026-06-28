@@ -33,7 +33,7 @@ struct HexGridEntryView: View {
             let s = HexGrid.radiusFitting(n: n, width: w, height: h)
             let grid = HexGrid(n: n, radius: s)
             ZStack {
-                outlines(grid, w, h, s)
+                outlines(grid, w, h, s, highlight: rowMates(of: focused))
                 labels(grid, w, h, s)
                 ForEach(0..<order.count, id: \.self) { cell($0, grid, w, h, s) }
             }
@@ -42,8 +42,24 @@ struct HexGridEntryView: View {
         .onAppear { if focused == nil { focused = 0 } }
     }
 
-    private func outlines(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
+    /// Cells sharing the focused cell's horizontal row (same `r`) or upper-right
+    /// diagonal (same `q+r`) — the two labeled rows it belongs to.
+    private func rowMates(of f: Int?) -> Set<Int> {
+        guard let f, f < order.count else { return [] }
+        let (fq, fr) = order[f]
+        let diag = fq + fr
+        return Set(order.enumerated().compactMap { (i, c) in
+            (c.r == fr || c.q + c.r == diag) ? i : nil
+        })
+    }
+
+    private func outlines(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double, highlight: Set<Int>) -> some View {
         Canvas { ctx, _ in
+            var mates = Path()
+            for i in highlight where i != focused {
+                mates.addPath(hexPath(order[i], grid, w / 2, h / 2))
+            }
+            ctx.fill(mates, with: .color(Color.gray.opacity(0.25)))
             var inactive = Path()
             for (i, c) in order.enumerated() {
                 let hex = hexPath(c, grid, w / 2, h / 2)

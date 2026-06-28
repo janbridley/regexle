@@ -59,15 +59,29 @@ struct HexGridEntryView: View {
     private func labels(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
         let edges = grid.perimeterEdges(originX: w / 2, originY: h / 2)
             .filter { $0.edge == 2 || $0.edge == 4 }
+        let idxMap = Dictionary(uniqueKeysWithValues: order.enumerated().map { ("\($1.q),\($1.r)", $0) })
         let off = s * 0.7
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
             ClueLabel(
                 text: idx < clues.count ? clues[idx] : "",
-                size: CGFloat(s * 0.3),
+                size: CGFloat(s * 0.3 + 2),
                 position: CGPoint(x: CGFloat(e.midpoint.x + e.outward.x * off),
                                   y: CGFloat(e.midpoint.y + e.outward.y * off)),
-                rotation: Self.baselineAngle(e.outward))
+                rotation: Self.baselineAngle(e.outward),
+                solved: isSolved(grid, edge: e, at: idx, idxMap: idxMap))
         }
+    }
+
+    /// True when every cell in the edge's row holds its matching clue letter.
+    private func isSolved(_ grid: HexGrid, edge: PerimeterEdge, at idx: Int, idxMap: [String: Int]) -> Bool {
+        guard idx < clues.count else { return false }
+        let clue = clues[idx]
+        let cells = grid.rowCells(for: edge)
+        guard cells.count == clue.count else { return false }
+        for (cell, ch) in zip(cells, clue) {
+            guard let i = idxMap["\(cell.q),\(cell.r)"], i < letters.count, letters[i] == String(ch) else { return false }
+        }
+        return true
     }
 
     private func cell(_ i: Int, _ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> HexCell {
@@ -146,11 +160,12 @@ private struct ClueLabel: View {
     let size: CGFloat
     let position: CGPoint
     let rotation: Double
+    let solved: Bool
 
     var body: some View {
         Text(text)
-            .font(.system(size: size, design: .monospaced))
-            .foregroundStyle(.red)
+            .font(.system(size: size, weight: solved ? .bold : .regular, design: .monospaced))
+            .foregroundStyle(solved ? Color(red: 0, green: 0xC9 / 255, blue: 0xA4 / 255) : Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255))
             .rotationEffect(.degrees(rotation))
             .position(position)
     }

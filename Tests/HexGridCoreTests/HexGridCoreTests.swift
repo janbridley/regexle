@@ -154,6 +154,18 @@ final class HexGridCoreTests: XCTestCase {
         XCTAssertEqual(left.sorted(), profile)
         XCTAssertEqual(upRight.sorted(), profile)
     }
+
+    func testRowCellsMatchRowLengthAndStayInCluster() {
+        let g = HexGrid(n: 4, radius: 1)
+        let k = 3
+        for e in g.perimeterEdges() where e.edge == 2 || e.edge == 4 {
+            let cells = g.rowCells(for: e)
+            XCTAssertEqual(cells.count, g.rowLength(of: e))
+            for (q, r) in cells {
+                XCTAssertLessThanOrEqual(max(abs(q), abs(r), abs(q + r)), k)
+            }
+        }
+    }
 }
 
 /// Splits the row-major cell list into contiguous runs of equal `r`.

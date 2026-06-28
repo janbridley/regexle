@@ -109,4 +109,19 @@ public struct HexGrid {
         default: return n
         }
     }
+
+    /// Ordered cells of the row `edge` labels, from the perimeter cell inward:
+    /// left→right for edge 2, upper-right→lower-left for edge 4.
+    public func rowCells(for edge: PerimeterEdge) -> [(q: Int, r: Int)] {
+        let k = n - 1
+        func inside(_ q: Int, _ r: Int) -> Bool { max(abs(q), abs(r), abs(q + r)) <= k }
+        var cells: [(q: Int, r: Int)] = []
+        var q = edge.q, r = edge.r
+        switch edge.edge {
+        case 2: repeat { cells.append((q, r)); q += 1 } while inside(q, r)
+        case 4: repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
+        default: cells.append((edge.q, edge.r))
+        }
+        return cells
+    }
 }

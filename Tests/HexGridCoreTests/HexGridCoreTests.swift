@@ -118,6 +118,33 @@ final class HexGridCoreTests: XCTestCase {
         XCTAssertTrue(HexGrid(n: 0, radius: 1).cells().isEmpty)
         XCTAssertTrue(HexGrid.polygons(n: 0, inWidth: 100, height: 100).isEmpty)
     }
+
+    // MARK: Perimeter edges
+
+    func testPerimeterEdgesSingleHexHasSix() {
+        let edges = HexGrid(n: 1, radius: 1).perimeterEdges()
+        XCTAssertEqual(edges.count, 6)
+        XCTAssertEqual(Set(edges.map(\.edge)), Set(0...5))
+    }
+
+    func testPerimeterEdgesNeighborOutsideAndUnitNormal() {
+        let g = HexGrid(n: 3, radius: 1)
+        let neighbor: [(Int, Int)] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)]
+        let k = 2
+        for e in g.perimeterEdges() {
+            let (dq, dr) = neighbor[e.edge]
+            let nq = e.q + dq, nr = e.r + dr
+            XCTAssertGreaterThan(max(abs(nq), abs(nr), abs(nq + nr)), k)   // neighbor outside
+            let len = (e.outward.x * e.outward.x + e.outward.y * e.outward.y).squareRoot()
+            XCTAssertEqual(len, 1, accuracy: 1e-9)                         // unit normal
+        }
+    }
+
+    func testLeftAndUpperLeftEdgesExist() {
+        let edges = HexGrid(n: 3, radius: 1).perimeterEdges()
+        XCTAssertTrue(edges.contains { $0.edge == 2 })   // left vertical
+        XCTAssertTrue(edges.contains { $0.edge == 3 })   // upper-left
+    }
 }
 
 /// Splits the row-major cell list into contiguous runs of equal `r`.

@@ -5,6 +5,14 @@ public struct HexPoint: Equatable {
     public init(_ x: Double, _ y: Double) { self.x = x; self.y = y }
 }
 
+public struct PerimeterEdge {
+    public let q: Int
+    public let r: Int
+    public let edge: Int            // 0..<6, edge between vertex `edge` and (edge+1)%6
+    public let midpoint: HexPoint
+    public let outward: HexPoint    // unit outward normal
+}
+
 /// Hexagonal cluster of pointy-top hexagons, `n` per side (3n²−3n+1 cells).
 public struct HexGrid {
 
@@ -60,5 +68,31 @@ public struct HexGrid {
         guard n > 0 else { return [] }
         return HexGrid(n: n, radius: radiusFitting(n: n, width: width, height: height, margin: margin))
             .hexagons(inWidth: width, height: height)
+    }
+
+    /// Perimeter edges — those whose axial neighbor is outside the cluster —
+    /// each with its midpoint and unit outward normal. Edge `e` runs between
+    /// vertex `e` and `(e+1)%6`; edge 2 is the left vertical, edge 3 the
+    /// upper-left. (0:down-right 1:down-left 2:left 3:up-left 4:up-right 5:right)
+    public func perimeterEdges(originX: Double = 0, originY: Double = 0) -> [PerimeterEdge] {
+        let neighbor: [(dq: Int, dr: Int)] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)]
+        let k = n - 1
+        var out: [PerimeterEdge] = []
+        for (q, r) in cells() {
+            for e in 0..<6 {
+                let nq = q + neighbor[e].dq, nr = r + neighbor[e].dr
+                guard max(abs(nq), abs(nr), abs(nq + nr)) > k else { continue }
+                let c = center(q: q, r: r, originX: originX, originY: originY)
+                let v = vertices(centeredAt: c)
+                let a = v[e], b = v[(e + 1) % 6]
+                let mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
+                let dx = mx - c.x, dy = my - c.y
+                let len = (dx * dx + dy * dy).squareRoot()
+                out.append(PerimeterEdge(q: q, r: r, edge: e,
+                                         midpoint: HexPoint(mx, my),
+                                         outward: HexPoint(dx / len, dy / len)))
+            }
+        }
+        return out
     }
 }

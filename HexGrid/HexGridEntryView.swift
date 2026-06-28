@@ -56,7 +56,7 @@ struct HexGridEntryView: View {
     private func outlines(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double, highlight: Set<Int>) -> some View {
         Canvas { ctx, _ in
             var mates = Path()
-            for i in highlight where i != focused {
+            for i in highlight {
                 mates.addPath(hexPath(order[i], grid, w / 2, h / 2))
             }
             ctx.fill(mates, with: .color(Color.gray.opacity(0.25)))

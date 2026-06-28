@@ -137,7 +137,9 @@ public struct HexGrid {
         var q = edge.q, r = edge.r
         switch edge.edge {
         case 2: repeat { cells.append((q, r)); q += 1 } while inside(q, r)
-        case 4: repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
+        case 4:
+            repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
+            cells.reverse()   // read in text order: first-filled cell ↔ clue[0]
         default: cells.append((edge.q, edge.r))
         }
         return cells

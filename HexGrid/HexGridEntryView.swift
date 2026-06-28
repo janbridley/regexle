@@ -4,8 +4,8 @@ import SwiftUI
     import HexGridCore
 #endif
 
-/// Single-letter entry grid with clue strings on the left (edge 2, horizontal)
-/// and upper-left (edge 3) perimeter edges. Type to advance, Backspace to step back.
+/// Single-letter entry grid with clue strings on perimeter edges {0, 2, 4}.
+/// Type to advance, Backspace to step back.
 struct HexGridEntryView: View {
 
     let n: Int
@@ -80,11 +80,9 @@ struct HexGridEntryView: View {
         }
     }
 
-    /// Clue strings on the left (edge 2, horizontal) and upper-right (edge 4)
-    /// edges. Each label's NEAR edge is pinned exactly one character from the
-    /// hex edge — independent of string length — by pushing the center past the
-    /// edge by `gap + halfWidth`, so the half that reaches back toward the hex
-    /// lands at a fixed `gap`.
+    /// Clue labels on perimeter edges {0, 2, 4}. Each label's near edge sits
+    /// exactly one glyph out from the hex edge: the center is pushed past the
+    /// edge by `gap + halfWidth`, so the half reaching back lands at a fixed gap.
     private func labels(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
         let edges = Self.assignClueEdges(grid.perimeterEdges(originX: w / 2, originY: h / 2))
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
@@ -113,10 +111,9 @@ struct HexGridEntryView: View {
         let clue = clues[idx]
         let cells = grid.rowCells(for: edge)
         guard cells.count == clue.count else { return false }
-        for (cell, ch) in zip(cells, clue) {
-            guard let i = cellIndex["\(cell.q),\(cell.r)"], i < letters.count, letters[i] == String(ch) else { return false }
+        return zip(cells, clue).allSatisfy { cell, ch in
+            cellIndex["\(cell.q),\(cell.r)"].map { $0 < letters.count && letters[$0] == String(ch) } ?? false
         }
-        return true
     }
 
     private func cell(_ i: Int, _ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> HexCell {
@@ -151,12 +148,10 @@ struct HexGridEntryView: View {
         return String((0..<length).map { _ in a.randomElement()! })
     }
 
-    /// One clue per perimeter edge among {0, 2, 4} — left/upper-left (2),
-    /// top/upper-right (4), bottom/lower-right (0). The three "mixed" corners
-    /// where two of these directions meet carry TWO clues (one per side), so
-    /// every side of the cluster is fully labeled.
+    /// One clue per perimeter edge among {0, 2, 4}. Mixed corners where two of
+    /// these directions meet carry two clues, so every side is fully labeled.
     private static func assignClueEdges(_ perims: [PerimeterEdge]) -> [PerimeterEdge] {
-        perims.filter { $0.edge == 0 || $0.edge == 2 || $0.edge == 4 }
+        perims.filter { [0, 2, 4].contains($0.edge) }
     }
 
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {

@@ -35,31 +35,39 @@ public struct HexGrid {
         return min(w / (sqrt3 * Double(2 * n - 1)), h / Double(3 * n - 1))
     }
 
+    /// Cluster size minus 1 — the cube-radius of the outermost ring.
+    private var k: Int { n - 1 }
+
+    /// True when (q,r) lies inside the cluster (cube radius ≤ k).
+    private func inside(_ q: Int, _ r: Int) -> Bool {
+        max(abs(q), abs(r), abs(q + r)) <= k
+    }
+
+    /// The q-range of row `r`, left→right.
+    private func qs(of r: Int) -> ClosedRange<Int> {
+        max(-k, -k - r)...min(k, k - r)
+    }
+
     /// Cells in reading order (top→bottom by r, left→right by q).
     public func cells() -> [(q: Int, r: Int)] {
-        let k = n - 1
         guard k >= 0 else { return [] }
         var out: [(q: Int, r: Int)] = []
         out.reserveCapacity(cellCount)
         for r in -k...k {
-            for q in max(-k, -k - r)...min(k, k - r) { out.append((q, r)) }
+            for q in qs(of: r) { out.append((q, r)) }
         }
         return out
     }
 
-    /// Boustrophedon (snake) traversal: same rows as `cells()`, but each row's
-    /// direction alternates so the end of one row is a visual neighbor of the
-    /// start of the next (down-left as rows widen, down-right as they narrow).
-    /// Every consecutive pair of cells therefore shares an edge — no leaps.
+    /// Snake traversal: same rows as `cells()`, but alternating rows reverse so
+    /// the end of one row is a visual neighbor of the start of the next.
     public func cellsBoustrophedon() -> [(q: Int, r: Int)] {
-        let k = n - 1
         guard k >= 0 else { return [] }
         var out: [(q: Int, r: Int)] = []
         out.reserveCapacity(cellCount)
         for row in 0...2 * k {
             let r = row - k
-            let qs = Array(max(-k, -k - r)...min(k, k - r))
-            let ordered = row % 2 == 0 ? qs : Array(qs.reversed())
+            let ordered = row % 2 == 0 ? Array(qs(of: r)) : Array(qs(of: r).reversed())
             for q in ordered { out.append((q, r)) }
         }
         return out
@@ -90,62 +98,52 @@ public struct HexGrid {
 
     /// Perimeter edges — those whose axial neighbor is outside the cluster —
     /// each with its midpoint and unit outward normal. Edge `e` runs between
-    /// vertex `e` and `(e+1)%6`; edge 2 is the left vertical, edge 3 the
-    /// upper-left. (0:down-right 1:down-left 2:left 3:up-left 4:up-right 5:right)
+    /// vertex `e` and `(e+1)%6`.
+    /// (0:down-right 1:down-left 2:left 3:up-left 4:up-right 5:right)
     public func perimeterEdges(originX: Double = 0, originY: Double = 0) -> [PerimeterEdge] {
         let neighbor: [(dq: Int, dr: Int)] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)]
-        let k = n - 1
         var out: [PerimeterEdge] = []
         for (q, r) in cells() {
             for e in 0..<6 {
                 let nq = q + neighbor[e].dq, nr = r + neighbor[e].dr
-                guard max(abs(nq), abs(nr), abs(nq + nr)) > k else { continue }
+                guard !inside(nq, nr) else { continue }
                 let c = center(q: q, r: r, originX: originX, originY: originY)
                 let v = vertices(centeredAt: c)
-                let a = v[e], b = v[(e + 1) % 6]
-                let mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
-                let dx = mx - c.x, dy = my - c.y
-                let len = (dx * dx + dy * dy).squareRoot()
-                out.append(PerimeterEdge(q: q, r: r, edge: e,
-                                         midpoint: HexPoint(mx, my),
-                                         outward: HexPoint(dx / len, dy / len)))
+                let m = HexPoint((v[e].x + v[(e + 1) % 6].x) / 2, (v[e].y + v[(e + 1) % 6].y) / 2)
+                let d = HexPoint(m.x - c.x, m.y - c.y)
+                let len = (d.x * d.x + d.y * d.y).squareRoot()
+                out.append(PerimeterEdge(q: q, r: r, edge: e, midpoint: m, outward: HexPoint(d.x / len, d.y / len)))
             }
         }
         return out
     }
 
-    /// Number of cells in the row that `edge` labels: the horizontal row
-    /// (constant r) for edge 2, the upper-right diagonal (constant q+r) for
-    /// edge 4, the vertical column (constant q) for edge 0.
+    /// Number of cells in the row `edge` labels: the column (constant q) for
+    /// edge 0, the horizontal row (constant r) for edge 2, the diagonal
+    /// (constant q+r) for edge 4.
     public func rowLength(of edge: PerimeterEdge) -> Int {
-        let k = n - 1
         switch edge.edge {
-        case 0: return min(k, k - edge.q) - max(-k, -k - edge.q) + 1
-        case 2: return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
-        case 4:
-            let s = edge.q + edge.r
-            return min(k, s + k) - max(-k, s - k) + 1
-        default: return n
+        case 0:            return min(k, k - edge.q) - max(-k, -k - edge.q) + 1
+        case 2:            return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
+        case 4: let s = edge.q + edge.r
+                         return min(k, s + k) - max(-k, s - k) + 1
+        default:           return n
         }
     }
 
-    /// Ordered cells of the row `edge` labels, from the perimeter cell inward:
-    /// left→right for edge 2, upper-right→lower-left for edge 4, bottom→top
-    /// (constant q) for edge 0.
+    /// Ordered cells of the row `edge` labels, read in text order
+    /// (first-filled cell ↔ clue[0]): left→right (edge 2), bottom→top (edge 0),
+    /// upper-right→lower-left (edge 4).
     public func rowCells(for edge: PerimeterEdge) -> [(q: Int, r: Int)] {
-        let k = n - 1
-        func inside(_ q: Int, _ r: Int) -> Bool { max(abs(q), abs(r), abs(q + r)) <= k }
         var cells: [(q: Int, r: Int)] = []
         var q = edge.q, r = edge.r
         switch edge.edge {
-        case 0:
-            repeat { cells.append((q, r)); r -= 1 } while inside(q, r)
-            cells.reverse()   // read in text order: first-filled cell ↔ clue[0]
+        case 0: repeat { cells.append((q, r)); r -= 1 } while inside(q, r)
+                cells.reverse()
         case 2: repeat { cells.append((q, r)); q += 1 } while inside(q, r)
-        case 4:
-            repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
-            cells.reverse()   // read in text order: first-filled cell ↔ clue[0]
-        default: cells.append((edge.q, edge.r))
+        case 4: repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
+                cells.reverse()
+        default: cells.append((q, r))
         }
         return cells
     }

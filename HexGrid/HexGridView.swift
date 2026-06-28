@@ -1,15 +1,10 @@
 import SwiftUI
 
 #if canImport(HexGridCore)
-    import HexGridCore  // macOS executable: core is a package dependency
+    import HexGridCore
 #endif
 
-/// Renders an `n` × `n` static grid of flat-top hexagons as vector line art.
-///
-/// All geometry is delegated to `HexGrid` (Foundation-only, unit-tested). The
-/// hex radius is derived from the view's current `CGSize` inside `Canvas`, so
-/// nothing is baked at a fixed pixel size and the drawing stays sharp at any
-/// resolution or scale factor.
+/// Static, non-interactive hex grid (vector line art).
 struct HexGridView: View {
 
     var n: Int = 8
@@ -18,29 +13,21 @@ struct HexGridView: View {
 
     var body: some View {
         Canvas { context, size in
-            let width = Double(size.width)
-            let height = Double(size.height)
-            let polygons = HexGrid.polygons(n: n, inWidth: width, height: height)
-
+            let w = Double(size.width)
+            let h = Double(size.height)
             var path = Path()
-            for hex in polygons {
+            for hex in HexGrid.polygons(n: n, inWidth: w, height: h) {
                 for (i, p) in hex.enumerated() {
-                    // Core geometry is in Double; convert to CGFloat at the
-                    // SwiftUI/CoreGraphics boundary (no implicit conversion).
-                    let point = CGPoint(x: CGFloat(p.x), y: CGFloat(p.y))
-                    if i == 0 { path.move(to: point) } else { path.addLine(to: point) }
+                    let pt = CGPoint(x: CGFloat(p.x), y: CGFloat(p.y))
+                    if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
                 }
                 path.closeSubpath()
             }
-
-            // Radius is proportional to size, so the stroke scales with it.
-            let radius = CGFloat(HexGrid.radiusFitting(n: n, width: width, height: height))
-            let lineWidth = max(0.5, radius * CGFloat(relativeLineWidth))
+            let lw = max(
+                0.5, CGFloat(HexGrid.radiusFitting(n: n, width: w, height: h)) * relativeLineWidth)
             context.stroke(
-                path,
-                with: .color(lineColor),
-                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
-            )
+                path, with: .color(lineColor),
+                style: StrokeStyle(lineWidth: lw, lineCap: .round, lineJoin: .round))
         }
         .background(Color.white)
     }

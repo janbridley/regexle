@@ -1,155 +1,108 @@
 import SwiftUI
 
 #if canImport(HexGridCore)
-    import HexGridCore  // macOS executable: core is a package dependency
+    import HexGridCore
 #endif
 
-/// An interactive hexagonal cluster where each cell is a single-letter entry.
-///
-/// Each cell is a focusable `Text` that captures key presses itself (rather
-/// than a `TextField`), giving precise single-letter behavior:
-///   • typing a letter stores it (uppercased) and advances to the next cell in
-///     reading order — right, then wrapping to the next row;
-///   • Backspace clears the current cell if it has a letter, otherwise steps
-///     focus back to the previous cell and clears that.
-///
-/// The hex outlines are stroked on a `Canvas` (line art); the focused cell is
-/// highlighted. Requires macOS 14 / iOS 17 for `.onKeyPress`.
+/// Single-letter entry grid: type to advance, Backspace to step back.
 struct HexGridEntryView: View {
 
     let n: Int
-
     @State private var letters: [String]
     @FocusState private var focused: Int?
 
     init(n: Int) {
         self.n = n
-        let count = HexGrid(n: n, radius: 1).cellCount
-        _letters = State(initialValue: Array(repeating: "", count: count))
+        _letters = State(
+            initialValue: Array(repeating: "", count: HexGrid(n: n, radius: 1).cellCount))
     }
 
-    /// Cells in traversal (row-major) order — drives layout and advance.
     private var order: [(q: Int, r: Int)] { HexGrid(n: n, radius: 1).cells() }
 
     var body: some View {
-        GeometryReader { proxy in
-            let w = Double(proxy.size.width)
-            let h = Double(proxy.size.height)
+        GeometryReader { p in
+            let w = Double(p.size.width)
+            let h = Double(p.size.height)
             let s = HexGrid.radiusFitting(n: n, width: w, height: h)
             let grid = HexGrid(n: n, radius: s)
-
             ZStack {
-                outlines(grid: grid, width: w, height: h, radius: s)
-
-                ForEach(0..<order.count, id: \.self) { i in
-                    cell(i, grid: grid, width: w, height: h, radius: s)
-                }
+                outlines(grid, w, h, s)
+                ForEach(0..<order.count, id: \.self) { cell($0, grid, w, h, s) }
             }
         }
         .background(Color.white)
         .onAppear { if focused == nil { focused = 0 } }
     }
 
-    // MARK: - Subviews
-
-    /// Builds the focusable cell for traversal index `i`. Isolated with a
-    /// concrete return type so the ForEach closure needs no inference.
-    private func cell(_ i: Int, grid: HexGrid, width: Double, height: Double, radius s: Double) -> HexCell {
-        let entry = order[i]
-        let c = grid.center(q: entry.q, r: entry.r, originX: width / 2, originY: height / 2)
-        return HexCell(
-            letter: letters[i],
-            fontSize: CGFloat(s * 0.8),
-            cellW: CGFloat(HexGrid.sqrt3 * s * 0.92),
-            cellH: CGFloat(1.7 * s),
-            position: CGPoint(x: CGFloat(c.x), y: CGFloat(c.y)),
-            index: i,
-            focus: $focused,
-            onKey: { handle($0, at: i) }
-        )
-    }
-
-    /// Hex outlines (line art); the focused cell is highlighted.
-    private func outlines(grid: HexGrid, width: Double, height: Double, radius s: Double) -> some View {
-        Canvas { context, _ in
+    private func outlines(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
+        Canvas { ctx, _ in
             var inactive = Path()
-            let baseColor = Color(red: 0.6, green: 0.6, blue: 0.6)
-            for (i, cell) in order.enumerated() {
-                let hex = path(for: cell, in: grid, originX: width / 2, originY: height / 2)
+            for (i, c) in order.enumerated() {
+                let hex = hexPath(c, grid, w / 2, h / 2)
                 if i == focused {
-                    context.stroke(
-                        hex,
-                        with: .color(.accentColor),
-                        style: StrokeStyle(lineWidth: max(1.5, s * 0.04), lineCap: .round, lineJoin: .round)
-                    )
+                    ctx.stroke(
+                        hex, with: .color(.accentColor),
+                        style: StrokeStyle(
+                            lineWidth: max(1.5, s * 0.04), lineCap: .round, lineJoin: .round))
                 } else {
                     inactive.addPath(hex)
                 }
             }
-            context.stroke(
-                inactive,
-                with: .color(baseColor),
-                style: StrokeStyle(lineWidth: max(0.5, s * 0.018), lineCap: .round, lineJoin: .round)
-            )
+            ctx.stroke(
+                inactive, with: .color(Color(red: 0.6, green: 0.6, blue: 0.6)),
+                style: StrokeStyle(
+                    lineWidth: max(0.5, s * 0.018), lineCap: .round, lineJoin: .round))
         }
     }
 
-    // MARK: - Key handling
-
-    /// Single-letter entry + navigation. Returns `.handled` when we consume the
-    /// key, `.ignored` to let it pass through (and be ignored by the empty cell).
-    private func handle(_ press: KeyPress, at i: Int) -> KeyPress.Result {
-        // Backspace (⌫) or forward-delete (⌦): clear current; if already empty,
-        // step back and clear the previous cell. The key can arrive as the named
-        // KeyEquivalent or as a raw control char (\u{8} BS / \u{7F} DEL), so we
-        // accept any of them.
-        let isDelete = press.key == .delete || press.key == .deleteForward
-            || press.characters == "\u{8}" || press.characters == "\u{7F}"
-        if isDelete {
-            if !letters[i].isEmpty {
-                letters[i] = ""
-            } else {
-                let prev = i - 1
-                if prev >= 0 {
-                    letters[prev] = ""
-                    focused = prev
-                }
-            }
-            return .handled
-        }
-
-        // A letter: store it (uppercased) and advance.
-        if let ch = press.characters.first, ch.isLetter {
-            letters[i] = String(ch.lowercased())
-            focused = Swift.min(i + 1, order.count - 1)   // clamp so Backspace still works at the end
-            return .handled
-        }
-
-        return .ignored
+    private func cell(_ i: Int, _ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> HexCell {
+        let c = grid.center(q: order[i].q, r: order[i].r, originX: w / 2, originY: h / 2)
+        return HexCell(
+            letter: letters[i], size: CGFloat(s * 0.8),
+            w: CGFloat(HexGrid.sqrt3 * s * 0.92), h: CGFloat(1.7 * s),
+            position: CGPoint(x: CGFloat(c.x), y: CGFloat(c.y)),
+            index: i, focus: $focused, onKey: { handle($0, i) })
     }
 
-    // MARK: - Helpers
-
-    /// Builds the closed hex path for a cell.
-    private func path(for cell: (q: Int, r: Int), in grid: HexGrid, originX: Double, originY: Double) -> Path {
-        let center = grid.center(q: cell.q, r: cell.r, originX: originX, originY: originY)
+    private func hexPath(_ c: (q: Int, r: Int), _ grid: HexGrid, _ ox: Double, _ oy: Double) -> Path
+    {
+        let ctr = grid.center(q: c.q, r: c.r, originX: ox, originY: oy)
         var path = Path()
-        for (k, p) in grid.vertices(centeredAt: center).enumerated() {
-            let point = CGPoint(x: CGFloat(p.x), y: CGFloat(p.y))
-            if k == 0 { path.move(to: point) } else { path.addLine(to: point) }
+        for (k, v) in grid.vertices(centeredAt: ctr).enumerated() {
+            let pt = CGPoint(x: CGFloat(v.x), y: CGFloat(v.y))
+            if k == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
         }
         path.closeSubpath()
         return path
     }
+
+    private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {
+        let delete =
+            press.key == .delete || press.key == .deleteForward
+            || press.characters == "\u{8}" || press.characters == "\u{7F}"
+        if delete {
+            if !letters[i].isEmpty {
+                letters[i] = ""
+            } else if i > 0 {
+                letters[i - 1] = ""
+                focused = i - 1
+            }
+            return .handled
+        }
+        if let ch = press.characters.first, ch.isLetter {
+            letters[i] = String(ch.lowercased())
+            focused = Swift.min(i + 1, order.count - 1)
+            return .handled
+        }
+        return .ignored
+    }
 }
 
-/// One focusable single-letter cell, positioned at its hexagon center. Isolated
-/// into its own type so the modifier chain + `.onKeyPress` type-check cleanly.
 private struct HexCell: View {
     let letter: String
-    let fontSize: CGFloat
-    let cellW: CGFloat
-    let cellH: CGFloat
+    let size: CGFloat
+    let w: CGFloat
+    let h: CGFloat
     let position: CGPoint
     let index: Int
     let focus: FocusState<Int?>.Binding
@@ -157,13 +110,12 @@ private struct HexCell: View {
 
     var body: some View {
         Text(letter)
-            .font(.system(size: fontSize, weight: .medium, design: .monospaced))
-            .foregroundStyle(.primary)
-            .frame(width: cellW, height: cellH)
+            .font(.system(size: size, weight: .medium, design: .monospaced))
+            .frame(width: w, height: h)
             .focusable()
             .focusEffectDisabled()
             .focused(focus, equals: index)
             .onKeyPress(action: onKey)
-            .position(x: position.x, y: position.y)
+            .position(position)
     }
 }

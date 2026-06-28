@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 #if canImport(HexGridCore)
     import HexGridCore
@@ -112,15 +113,14 @@ struct HexGridEntryView: View {
             solved: isSolved(grid, edge: e, at: idx))
     }
 
-    /// True when every cell in the edge's row holds its matching clue letter.
+    /// True when the row is fully filled and its letters match the clue's regex.
     private func isSolved(_ grid: HexGrid, edge: PerimeterEdge, at idx: Int) -> Bool {
         guard idx < clues.count else { return false }
-        let clue = clues[idx]
         let cells = grid.rowCells(for: edge)
-        guard cells.count == clue.count else { return false }
-        return zip(cells, clue).allSatisfy { cell, ch in
-            cellIndex["\(cell.q),\(cell.r)"].map { $0 < letters.count && letters[$0] == String(ch) } ?? false
-        }
+        let row = cells.compactMap { cellIndex["\($0.q),\($0.r)"] }
+            .map { $0 < letters.count ? letters[$0] : "" }
+            .joined()
+        return row.count == cells.count && Self.fullMatch(clues[idx], row)
     }
 
     private func cell(_ i: Int, _ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> HexCell {
@@ -150,9 +150,20 @@ struct HexGridEntryView: View {
         return a
     }
 
+    private static let alphabet = Array("abcdefghijklmnopqrstuvwxyz")
+
+    /// Random lowercase letters. These are the clue *patterns* — plain literals
+    /// today, but matched through the regex engine so real patterns work later.
     private static func randomString(_ length: Int) -> String {
-        let a = Array("abcdefghijklmnopqrstuvwxyz")
-        return String((0..<length).map { _ in a.randomElement()! })
+        String((0..<length).map { _ in alphabet.randomElement()! })
+    }
+
+    /// True if `pattern` (a regex) matches the entirety of `text`.
+    private static func fullMatch(_ pattern: String, _ text: String) -> Bool {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+        let range = NSRange(location: 0, length: text.utf16.count)
+        guard let m = regex.firstMatch(in: text, range: range) else { return false }
+        return m.range.location == 0 && m.range.length == text.utf16.count
     }
 
     /// One clue per perimeter edge among {0, 2, 4}. Mixed corners where two of

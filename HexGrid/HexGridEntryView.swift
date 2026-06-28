@@ -120,7 +120,7 @@ struct HexGridEntryView: View {
 
         // A letter: store it (uppercased) and advance.
         if let ch = press.characters.first, ch.isLetter {
-            letters[i] = String(ch.uppercased())
+            letters[i] = String(ch.lowercased())
             focused = Swift.min(i + 1, order.count - 1)   // clamp so Backspace still works at the end
             return .handled
         }

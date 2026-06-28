@@ -145,6 +145,15 @@ final class HexGridCoreTests: XCTestCase {
         XCTAssertTrue(edges.contains { $0.edge == 2 })   // left vertical
         XCTAssertTrue(edges.contains { $0.edge == 3 })   // upper-left
     }
+
+    func testRowLengthProfileIsSharedByBothAxes() {
+        let g = HexGrid(n: 4, radius: 1)
+        let profile = [4, 5, 6, 7, 6, 5, 4].sorted()   // {4,4,5,5,6,6,7}
+        let left = g.perimeterEdges().filter { $0.edge == 2 }.map { g.rowLength(of: $0) }
+        let upRight = g.perimeterEdges().filter { $0.edge == 4 }.map { g.rowLength(of: $0) }
+        XCTAssertEqual(left.sorted(), profile)
+        XCTAssertEqual(upRight.sorted(), profile)
+    }
 }
 
 /// Splits the row-major cell list into contiguous runs of equal `r`.

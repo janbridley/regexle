@@ -95,4 +95,18 @@ public struct HexGrid {
         }
         return out
     }
+
+    /// Number of cells in the row that `edge` labels: the horizontal row
+    /// (constant r) for edge 2, the upper-right diagonal (constant q+r) for
+    /// edge 4. Both axes share the n..2n−1..n profile.
+    public func rowLength(of edge: PerimeterEdge) -> Int {
+        let k = n - 1
+        switch edge.edge {
+        case 2: return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
+        case 4:
+            let s = edge.q + edge.r
+            return min(k, s + k) - max(-k, s - k) + 1
+        default: return n
+        }
+    }
 }

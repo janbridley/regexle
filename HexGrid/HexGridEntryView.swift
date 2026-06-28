@@ -19,7 +19,7 @@ struct HexGridEntryView: View {
         _letters = State(initialValue: Array(repeating: "", count: g.cellCount))
         _clues = State(initialValue: g.perimeterEdges()
             .filter { $0.edge == 2 || $0.edge == 4 }
-            .map { _ in Self.randomString(n) })
+            .map { Self.randomString(g.rowLength(of: $0)) })
     }
 
     private var order: [(q: Int, r: Int)] { HexGrid(n: n, radius: 1).cells() }

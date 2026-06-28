@@ -60,11 +60,11 @@ struct HexGridEntryView: View {
         let edges = grid.perimeterEdges(originX: w / 2, originY: h / 2)
             .filter { $0.edge == 2 || $0.edge == 4 }
         let idxMap = Dictionary(uniqueKeysWithValues: order.enumerated().map { ("\($1.q),\($1.r)", $0) })
-        let off = s * 0.7
+        let off = s * 1.0
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
             ClueLabel(
                 text: idx < clues.count ? clues[idx] : "",
-                size: CGFloat(s * 0.3 + 2),
+                size: CGFloat(s * 0.5),
                 position: CGPoint(x: CGFloat(e.midpoint.x + e.outward.x * off),
                                   y: CGFloat(e.midpoint.y + e.outward.y * off)),
                 rotation: Self.baselineAngle(e.outward),

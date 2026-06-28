@@ -116,10 +116,11 @@ public struct HexGrid {
 
     /// Number of cells in the row that `edge` labels: the horizontal row
     /// (constant r) for edge 2, the upper-right diagonal (constant q+r) for
-    /// edge 4. Both axes share the n..2n−1..n profile.
+    /// edge 4, the vertical column (constant q) for edge 0.
     public func rowLength(of edge: PerimeterEdge) -> Int {
         let k = n - 1
         switch edge.edge {
+        case 0: return min(k, k - edge.q) - max(-k, -k - edge.q) + 1
         case 2: return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
         case 4:
             let s = edge.q + edge.r
@@ -129,13 +130,15 @@ public struct HexGrid {
     }
 
     /// Ordered cells of the row `edge` labels, from the perimeter cell inward:
-    /// left→right for edge 2, upper-right→lower-left for edge 4.
+    /// left→right for edge 2, upper-right→lower-left for edge 4, bottom→top
+    /// (constant q) for edge 0.
     public func rowCells(for edge: PerimeterEdge) -> [(q: Int, r: Int)] {
         let k = n - 1
         func inside(_ q: Int, _ r: Int) -> Bool { max(abs(q), abs(r), abs(q + r)) <= k }
         var cells: [(q: Int, r: Int)] = []
         var q = edge.q, r = edge.r
         switch edge.edge {
+        case 0: repeat { cells.append((q, r)); r -= 1 } while inside(q, r)
         case 2: repeat { cells.append((q, r)); q += 1 } while inside(q, r)
         case 4:
             repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)

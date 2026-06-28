@@ -22,8 +22,7 @@ struct HexGridEntryView: View {
         self.order = cells
         self.cellIndex = Dictionary(uniqueKeysWithValues: cells.enumerated().map { ("\($1.q),\($1.r)", $0) })
         _letters = State(initialValue: Array(repeating: "", count: cells.count))
-        _clues = State(initialValue: g.perimeterEdges()
-            .filter { $0.edge == 2 || $0.edge == 4 }
+        _clues = State(initialValue: Self.assignClueEdges(g.perimeterEdges())
             .map { Self.randomString(g.rowLength(of: $0)) })
     }
 
@@ -87,8 +86,7 @@ struct HexGridEntryView: View {
     /// edge by `gap + halfWidth`, so the half that reaches back toward the hex
     /// lands at a fixed `gap`.
     private func labels(_ grid: HexGrid, _ w: Double, _ h: Double, _ s: Double) -> some View {
-        let edges = grid.perimeterEdges(originX: w / 2, originY: h / 2)
-            .filter { $0.edge == 2 || $0.edge == 4 }
+        let edges = Self.assignClueEdges(grid.perimeterEdges(originX: w / 2, originY: h / 2))
         return ForEach(Array(edges.enumerated()), id: \.offset) { idx, e in
             clueLabel(grid, e, idx, s)
         }
@@ -151,6 +149,21 @@ struct HexGridEntryView: View {
     private static func randomString(_ length: Int) -> String {
         let a = Array("abcdefghijklmnopqrstuvwxyz")
         return String((0..<length).map { _ in a.randomElement()! })
+    }
+
+    /// One clue per outer cell: assign each boundary cell its highest-priority
+    /// perimeter edge among {2, 4, 0}, so corner cells (in two edge sets) get
+    /// exactly one clue. Covers left/upper-left (2), top/right (4), and
+    /// bottom/lower-right (0).
+    private static func assignClueEdges(_ perims: [PerimeterEdge]) -> [PerimeterEdge] {
+        var out: [PerimeterEdge] = []
+        var seen = Set<String>()
+        for priority in [2, 4, 0] {
+            for e in perims where e.edge == priority {
+                if seen.insert("\(e.q),\(e.r)").inserted { out.append(e) }
+            }
+        }
+        return out
     }
 
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {

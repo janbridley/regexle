@@ -17,6 +17,7 @@ struct HexGridEntryView: View {
 
     let n: Int
     @State private var puzzle: HexPuzzle
+    @State private var cursor = HexCursor()
     @FocusState private var focused: Int?
 
     init(n: Int) {
@@ -97,7 +98,9 @@ struct HexGridEntryView: View {
         return HexCell(letter: puzzle.letters[i], size: CGFloat(s * 0.8),
                        w: CGFloat(HexGrid.sqrt3 * s * 0.92), h: CGFloat(1.7 * s),
                        position: CGPoint(x: CGFloat(c.x), y: CGFloat(c.y)),
-                       index: i, focus: $focused, onKey: { handle($0, i) })
+                       index: i, focus: $focused,
+                       onKey: { handle($0, i) },
+                       onTap: { focused = cursor.didTap(i, in: puzzle) })
     }
 
     private func hexPath(_ c: (q: Int, r: Int), _ grid: HexGrid, _ origin: HexPoint) -> Path {
@@ -123,17 +126,17 @@ struct HexGridEntryView: View {
         let delete = press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
         if delete {
-            if puzzle.letters[i].isEmpty, i > 0 {
-                puzzle.letters[i - 1] = ""
-                focused = i - 1
-            } else {
+            if !puzzle.letters[i].isEmpty {
                 puzzle.letters[i] = ""
+            } else if let prev = cursor.backspaceTarget(from: i, in: puzzle) {
+                puzzle.letters[prev] = ""
+                focused = prev
             }
             return .handled
         }
         if let ch = press.characters.first, ch.isLetter {
             puzzle.letters[i] = String(ch.lowercased())
-            focused = Swift.min(i + 1, puzzle.order.count - 1)
+            focused = cursor.didType(i, in: puzzle)
             return .handled
         }
         return .ignored
@@ -149,6 +152,7 @@ private struct HexCell: View {
     let index: Int
     let focus: FocusState<Int?>.Binding
     let onKey: (KeyPress) -> KeyPress.Result
+    let onTap: () -> Void
 
     var body: some View {
         Text(letter)
@@ -159,7 +163,7 @@ private struct HexCell: View {
             .focusEffectDisabled()
             .focused(focus, equals: index)
             .onKeyPress(phases: .down, action: onKey)
-            .onTapGesture { focus.wrappedValue = index }   // click/tap → jump focus here
+            .onTapGesture(perform: onTap)              // tap → cursor infers direction
             .position(position)
     }
 }

@@ -49,6 +49,35 @@ struct HexPuzzle {
         return row.count == cells.count && Self.fullMatch(clues[clueIndex], row)
     }
 
+    // MARK: - Lines
+
+    /// Ordered cell indices of the line through `cell` along `axis`, in the
+    /// clue's reading order. (Axis is defined in HexCursor.swift.)
+    func line(through cell: Int, axis: Axis) -> [Int] {
+        guard cell >= 0, cell < order.count else { return [] }
+        let (q, r) = order[cell]
+        guard let edge = clueEdges.first(where: { e in
+            guard e.edge == axis.edge else { return false }
+            switch axis {
+            case .row:      return e.r == r
+            case .column:   return e.q == q
+            case .diagonal: return e.q + e.r == q + r
+            }
+        }) else { return [] }
+        return grid.rowCells(for: edge).compactMap { cellIndex["\($0.q),\($0.r)"] }
+    }
+
+    /// The single line direction shared by two distinct cells, if any. Two
+    /// distinct cells share at most one of {r, q, q+r}, so this is unambiguous.
+    func sharedAxis(between a: Int, and b: Int) -> Axis? {
+        guard a != b, a >= 0, b >= 0, a < order.count, b < order.count else { return nil }
+        let (qa, ra) = order[a], (qb, rb) = order[b]
+        if ra == rb { return .row }
+        if qa == qb { return .column }
+        if qa + ra == qb + rb { return .diagonal }
+        return nil
+    }
+
     // MARK: - Statics
     private static let alphabet = Array("abcdefghijklmnopqrstuvwxyz")
 

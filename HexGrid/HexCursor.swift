@@ -36,7 +36,7 @@ struct HexCursor {
     mutating func didType(_ cell: Int, in puzzle: HexPuzzle) -> Int {
         lastTyped = cell
         guard let axis else {
-            return Swift.min(cell + 1, puzzle.order.count - 1)  // snake fallback
+            return min(cell + 1, puzzle.order.count - 1)  // snake fallback
         }
         let line = puzzle.line(through: cell, axis: axis)
         if let nxt = Self.nextEmpty(

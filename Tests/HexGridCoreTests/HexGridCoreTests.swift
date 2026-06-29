@@ -80,16 +80,8 @@ final class HexGridCoreTests: XCTestCase {
         XCTAssertEqual((ys.min()! + ys.max()!) / 2, 200, accuracy: 1e-9)
     }
 
-    func testPolygonsHelperMatchesExplicitGrid() {
-        let n = 3
-        let r = HexGrid.radiusFitting(n: n, width: 500, height: 500)
-        let explicit = HexGrid(n: n, radius: r).hexagons(inWidth: 500, height: 500)
-        XCTAssertEqual(explicit, HexGrid.polygons(n: n, inWidth: 500, height: 500))
-    }
-
     func testZeroNIsEmpty() {
         XCTAssertTrue(HexGrid(n: 0, radius: 1).cells().isEmpty)
-        XCTAssertTrue(HexGrid.polygons(n: 0, inWidth: 100, height: 100).isEmpty)
     }
 
     // MARK: Boustrophedon traversal

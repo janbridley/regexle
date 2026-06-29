@@ -90,12 +90,6 @@ public struct HexGrid {
               .map { vertices(centeredAt: $0) }
     }
 
-    public static func polygons(n: Int, inWidth width: Double, height: Double, margin: Double = 8) -> [[HexPoint]] {
-        guard n > 0 else { return [] }
-        return HexGrid(n: n, radius: radiusFitting(n: n, width: width, height: height, margin: margin))
-            .hexagons(inWidth: width, height: height)
-    }
-
     /// Perimeter edges — those whose axial neighbor is outside the cluster —
     /// each with its midpoint and unit outward normal. Edge `e` runs between
     /// vertex `e` and `(e+1)%6`.

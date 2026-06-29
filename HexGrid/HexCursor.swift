@@ -33,19 +33,17 @@ struct HexCursor {
     private(set) var lastTyped: Int?
 
     /// Call after a character is typed in `cell`; returns the next focus index.
+    /// Steps to the next cell along the line in the inferred direction, in line
+    /// order (filling over what's there); stays put at the end of the line.
     mutating func didType(_ cell: Int, in puzzle: HexPuzzle) -> Int {
         lastTyped = cell
         guard let axis else {
             return min(cell + 1, puzzle.order.count - 1)  // snake fallback
         }
         let line = puzzle.line(through: cell, axis: axis)
-        if let nxt = Self.nextEmpty(
-            after: cell, in: line, forward: forward,
-            isEmpty: { puzzle.letters[$0].isEmpty })
-        {
-            return nxt
-        }
-        return cell  // line full → stay put
+        guard let pos = line.firstIndex(of: cell) else { return cell }
+        let next = forward ? pos + 1 : pos - 1
+        return line.indices.contains(next) ? line[next] : cell
     }
 
     /// Call when the user taps `target`; may update the inferred direction.
@@ -69,21 +67,5 @@ struct HexCursor {
         guard let pos = line.firstIndex(of: cell) else { return nil }
         let neighbor = forward ? pos - 1 : pos + 1
         return line.indices.contains(neighbor) ? line[neighbor] : nil
-    }
-
-    /// First empty cell strictly after `cell` along `line` in the chosen
-    /// direction, wrapping around. Nil when the line is full.
-    private static func nextEmpty(
-        after cell: Int, in line: [Int],
-        forward: Bool, isEmpty: (Int) -> Bool
-    ) -> Int? {
-        guard let pos = line.firstIndex(of: cell), line.count > 1 else { return nil }
-        let n = line.count
-        let step = forward ? 1 : -1
-        for offset in 1..<n {
-            let j = ((pos + step * offset) % n + n) % n
-            if isEmpty(line[j]) { return line[j] }
-        }
-        return nil
     }
 }

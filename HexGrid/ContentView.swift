@@ -14,9 +14,11 @@ struct ContentView: View {
                 .id(n)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            Stepper("Side: \(n)  (\(HexGrid(n: n, radius: 1).cellCount) cells)", value: $n, in: 1...8)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+            Stepper(
+                "Side: \(n)  (\(HexGrid(n: n, radius: 1).cellCount) cells)", value: $n, in: 1...8
+            )
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
         .background(Color.white)
     }

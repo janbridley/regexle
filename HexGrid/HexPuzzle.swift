@@ -11,8 +11,8 @@ struct HexPuzzle {
     let clues: [String]               // one clue per `clueEdges` entry
     var letters: [String]
 
-    let cellIndex: [String: Int]   // "q,r" → order index
-    let grid: HexGrid              // unit grid (radius 1), for row lookups
+    private let cellIndex: [String: Int]   // "q,r" → order index
+    private let grid: HexGrid              // unit grid (radius 1), for row lookups
 
     init(n: Int) {
         self.n = n
@@ -47,12 +47,6 @@ struct HexPuzzle {
             .map { letters[$0] }
             .joined()
         return row.count == cells.count && Self.fullMatch(clues[clueIndex], row)
-    }
-
-    /// True when every clue is solved at once.
-    var allSolved: Bool {
-        guard !clueEdges.isEmpty else { return false }
-        return (0..<clues.count).allSatisfy { isSolved(at: $0) }
     }
 
     // MARK: - Statics

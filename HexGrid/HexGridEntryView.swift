@@ -17,7 +17,6 @@ struct HexGridEntryView: View {
 
     let n: Int
     @State private var puzzle: HexPuzzle
-    @State private var axis: Axis = .row
     @FocusState private var focused: Int?
 
     init(n: Int) {
@@ -51,7 +50,7 @@ struct HexGridEntryView: View {
     private func outlines(grid: HexGrid, s: Double, origin: HexPoint) -> some View {
         Canvas { ctx, _ in
             var mates = Path()
-            for i in puzzle.activeLine(through: focused, axis: axis) {
+            for i in puzzle.rowMates(of: focused) {
                 mates.addPath(hexPath(puzzle.order[i], grid, origin))
             }
             ctx.fill(mates, with: .color(rowMateFill))
@@ -65,24 +64,7 @@ struct HexGridEntryView: View {
             }
             ctx.stroke(inactive, with: .color(hexOutline),
                        style: StrokeStyle(lineWidth: max(0.5, s * 0.018), lineCap: .round, lineJoin: .round))
-            if puzzle.allSolved {
-                ctx.stroke(perimeterPath(grid, origin), with: .color(solvedColor),
-                           style: StrokeStyle(lineWidth: max(2, s * 0.06), lineCap: .round, lineJoin: .round))
-            }
         }
-    }
-
-    /// Single closed-ish path along the cluster's outer hexagon edges, built by
-    /// connecting the two vertices of each perimeter edge.
-    private func perimeterPath(_ grid: HexGrid, _ origin: HexPoint) -> Path {
-        var path = Path()
-        for e in grid.perimeterEdges(originX: origin.x, originY: origin.y) {
-            let c = grid.center(q: e.q, r: e.r, originX: origin.x, originY: origin.y)
-            let v = grid.vertices(centeredAt: c)
-            path.move(to: CGPoint(x: CGFloat(v[e.edge].x), y: CGFloat(v[e.edge].y)))
-            path.addLine(to: CGPoint(x: CGFloat(v[(e.edge + 1) % 6].x), y: CGFloat(v[(e.edge + 1) % 6].y)))
-        }
-        return path
     }
 
     /// Clue labels on perimeter edges {0, 2, 4}. Each label's near edge sits
@@ -106,11 +88,7 @@ struct HexGridEntryView: View {
             size: CGFloat(fontSize),
             position: CGPoint(x: mid.x + CGFloat(e.outward.x * off), y: mid.y + CGFloat(e.outward.y * off)),
             rotation: Self.baselineAngle(e.outward),
-            solved: puzzle.isSolved(at: idx),
-            onTap: {
-                if let a = Axis(edge: e.edge) { axis = a }
-                if let open = puzzle.firstOpenInLine(of: e) { focused = open }
-            })
+            solved: puzzle.isSolved(at: idx))
     }
 
     private func cell(_ i: Int, grid: HexGrid, s: Double, origin: HexPoint) -> HexCell {
@@ -119,9 +97,7 @@ struct HexGridEntryView: View {
         return HexCell(letter: puzzle.letters[i], size: CGFloat(s * 0.8),
                        w: CGFloat(HexGrid.sqrt3 * s * 0.92), h: CGFloat(1.7 * s),
                        position: CGPoint(x: CGFloat(c.x), y: CGFloat(c.y)),
-                       index: i, focus: $focused,
-                       onKey: { handle($0, i) },
-                       onTap: { if focused == i { axis = axis.next } else { focused = i } })
+                       index: i, focus: $focused, onKey: { handle($0, i) })
     }
 
     private func hexPath(_ c: (q: Int, r: Int), _ grid: HexGrid, _ origin: HexPoint) -> Path {
@@ -147,24 +123,17 @@ struct HexGridEntryView: View {
         let delete = press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
         if delete {
-            let line = puzzle.line(through: i, axis: axis)
-            if !puzzle.letters[i].isEmpty {
+            if puzzle.letters[i].isEmpty, i > 0 {
+                puzzle.letters[i - 1] = ""
+                focused = i - 1
+            } else {
                 puzzle.letters[i] = ""
-            } else if let pos = line.firstIndex(of: i), pos > 0 {
-                let prev = line[pos - 1]
-                puzzle.letters[prev] = ""
-                focused = prev
             }
             return .handled
         }
         if let ch = press.characters.first, ch.isLetter {
             puzzle.letters[i] = String(ch.lowercased())
-            let line = puzzle.line(through: i, axis: axis)
-            if puzzle.isComplete(line) {
-                focused = puzzle.firstOpenInNextLine(afterCell: i, axis: axis) ?? i
-            } else {
-                focused = puzzle.nextOpen(after: i, in: line) ?? i
-            }
+            focused = Swift.min(i + 1, puzzle.order.count - 1)
             return .handled
         }
         return .ignored
@@ -180,7 +149,6 @@ private struct HexCell: View {
     let index: Int
     let focus: FocusState<Int?>.Binding
     let onKey: (KeyPress) -> KeyPress.Result
-    let onTap: () -> Void
 
     var body: some View {
         Text(letter)
@@ -191,7 +159,7 @@ private struct HexCell: View {
             .focusEffectDisabled()
             .focused(focus, equals: index)
             .onKeyPress(phases: .down, action: onKey)
-            .onTapGesture(perform: onTap)              // tap focused cell → rotate axis
+            .onTapGesture { focus.wrappedValue = index }   // click/tap → jump focus here
             .position(position)
     }
 }
@@ -202,15 +170,12 @@ private struct ClueLabel: View {
     let position: CGPoint
     let rotation: Double
     let solved: Bool
-    let onTap: () -> Void
 
     var body: some View {
         Text(text)
             .font(.system(size: size, weight: solved ? .bold : .regular, design: .monospaced))
             .foregroundStyle(solved ? solvedColor : clueColor)
             .rotationEffect(.degrees(rotation))
-            .contentShape(Rectangle())
-            .onTapGesture(perform: onTap)
             .position(position)
     }
 }

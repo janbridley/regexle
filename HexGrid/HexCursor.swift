@@ -4,12 +4,16 @@
 
 /// The three line directions through a cell.
 enum Axis: Equatable {
-    case row        // constant r   (edge 2)
-    case column     // constant q   (edge 0)
-    case diagonal   // constant q+r (edge 4)
+    case row  // constant r   (edge 2)
+    case column  // constant q   (edge 0)
+    case diagonal  // constant q+r (edge 4)
 
     var edge: Int {
-        switch self { case .row: 2; case .column: 0; case .diagonal: 4 }
+        switch self {
+        case .row: 2
+        case .column: 0
+        case .diagonal: 4
+        }
     }
 }
 
@@ -32,14 +36,16 @@ struct HexCursor {
     mutating func didType(_ cell: Int, in puzzle: HexPuzzle) -> Int {
         lastTyped = cell
         guard let axis else {
-            return Swift.min(cell + 1, puzzle.order.count - 1)   // snake fallback
+            return Swift.min(cell + 1, puzzle.order.count - 1)  // snake fallback
         }
         let line = puzzle.line(through: cell, axis: axis)
-        if let nxt = Self.nextEmpty(after: cell, in: line, forward: forward,
-                                    isEmpty: { puzzle.letters[$0].isEmpty }) {
+        if let nxt = Self.nextEmpty(
+            after: cell, in: line, forward: forward,
+            isEmpty: { puzzle.letters[$0].isEmpty })
+        {
             return nxt
         }
-        return cell   // line full → stay put
+        return cell  // line full → stay put
     }
 
     /// Call when the user taps `target`; may update the inferred direction.
@@ -67,10 +73,13 @@ struct HexCursor {
 
     /// First empty cell strictly after `cell` along `line` in the chosen
     /// direction, wrapping around. Nil when the line is full.
-    private static func nextEmpty(after cell: Int, in line: [Int],
-                                  forward: Bool, isEmpty: (Int) -> Bool) -> Int? {
+    private static func nextEmpty(
+        after cell: Int, in line: [Int],
+        forward: Bool, isEmpty: (Int) -> Bool
+    ) -> Int? {
         guard let pos = line.firstIndex(of: cell), line.count > 1 else { return nil }
-        let n = line.count, step = forward ? 1 : -1
+        let n = line.count
+        let step = forward ? 1 : -1
         for offset in 1..<n {
             let j = ((pos + step * offset) % n + n) % n
             if isEmpty(line[j]) { return line[j] }

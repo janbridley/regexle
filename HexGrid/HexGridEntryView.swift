@@ -35,7 +35,7 @@ struct HexGridEntryView: View {
             let clearance = 0.6 * Double(n) + 0.5
             let s = max(
                 0,
-                Swift.min(
+                min(
                     w / (HexGrid.sqrt3 * Double(2 * n - 1) + 2 * clearance),
                     h / (Double(3 * n - 1) + 2 * clearance)
                 ))

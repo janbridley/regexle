@@ -1,13 +1,12 @@
-# HexGrid — CLI-driven build / test / visualize workflow.
+# HexGrid — CLI-driven build / test / run workflow.
 #
 #   make build   compile the iOS app (xcodebuild, no simulator needed)
 #   make test    run the geometry unit tests (swift test)
-#   make vis     render the grid to a PNG and open it (swift run vis)
+#   make run     launch the grid in a native macOS window (swift run HexGridMac)
 #   make clean   remove build artifacts
 #
-# All three tools share one portable geometry core (Sources/HexGridCore),
-# so the math that renders in the app is exactly what the tests assert and
-# what `vis` draws.
+# The app and the tests share one portable geometry core (Sources/HexGridCore),
+# so the math that renders in the app is exactly what the tests assert.
 
 PROJECT  := HexGrid.xcodeproj
 TARGET   := HexGrid
@@ -18,13 +17,9 @@ CONFIG   := Debug
 # presence of Package.swift can't resolve to the package's scheme instead.
 SDK      := iphoneos
 
-VIS_N    ?= 4
-VIS_SIZE ?= 800
-VIS_OUT  ?= out/grid.png
-
 .DEFAULT_GOAL := help
 
-.PHONY: help build test vis run clean
+.PHONY: help build test run clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-8s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -41,11 +36,6 @@ build: ## Build the iOS app (iphoneos SDK, no device/simulator needed)
 
 test: ## Run unit tests on the geometry core
 	swift test
-
-vis: ## Render the grid to a PNG and open it
-	@mkdir -p $(dir $(VIS_OUT))
-	swift run vis -- --n $(VIS_N) --size $(VIS_SIZE) --out $(VIS_OUT)
-	@open $(VIS_OUT)
 
 run: ## Launch the grid in a native, resizable macOS window
 	swift run HexGridMac

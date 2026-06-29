@@ -20,13 +20,12 @@ let package = Package(
             path: "Sources/vis"
         ),
         // Native macOS window app. Reuses the iOS app's view sources directly
-        // (HexGridView + ContentView); HexGridCore supplies the geometry.
+        // (HexGridEntryView + ContentView); HexGridCore supplies the geometry.
         .executableTarget(
             name: "HexGridMac",
             dependencies: ["HexGridCore"],
             path: ".",
             sources: [
-                "HexGrid/HexGridView.swift",
                 "HexGrid/HexPuzzle.swift",
                 "HexGrid/HexCursor.swift",
                 "HexGrid/HexGridEntryView.swift",

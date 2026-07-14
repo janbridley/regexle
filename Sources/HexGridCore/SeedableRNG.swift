@@ -25,7 +25,7 @@ public struct SFC64: RandomNumberGenerator {
         let out = a &+ b &+ counter
         a = b ^ (b >> 11)
         b = c &+ (c << 3)
-        c = c.rotatingLeft(by: 24) &+ out
+        c = ((c << 24) | (c >> 40)) &+ out   // rotate-left(c, 24) for UInt64
         counter = counter &+ 1   // Weyl increment of 1
         return out
     }

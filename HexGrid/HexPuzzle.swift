@@ -1,3 +1,5 @@
+import Foundation
+
 #if canImport(HexGridCore)
     import HexGridCore
 #endif
@@ -12,6 +14,8 @@ struct HexPuzzle {
     let seed: UInt64
     let topology: HexBoardTopology
     let clues: [String]
+    /// Each clue's regex compiled exactly once (at init) and reused by `isSolved`
+    private let compiledClues: [Regex<AnyRegexOutput>?]
     let solution: [String]  // parallel to `order`; the intended fill (hints / self-check)
     var letters: [String]   // the player's input, parallel to `order`
 
@@ -26,6 +30,7 @@ struct HexPuzzle {
         self.topology = HexBoardTopology(n: n)
         let generated = RegexleGenerator.generate(n: n, seed: seed, difficulty: difficulty)
         self.clues = generated.clues
+        self.compiledClues = generated.clues.map { try? Regex($0) }
         self.solution = generated.solution
         self.letters = Array(repeating: "", count: topology.order.count)
     }
@@ -55,9 +60,10 @@ struct HexPuzzle {
     /// generator used, so the reading order is identical.
     func isSolved(at clueIndex: Int) -> Bool {
         guard clueIndex >= 0, clueIndex < clues.count else { return false }
+        guard let regex = compiledClues[clueIndex] else { return false }
         guard let row = topology.lineString(forClue: clueIndex, letters: letters) else { return false }
         let cells = grid.rowCells(for: clueEdges[clueIndex])
-        return row.count == cells.count && RegexleGenerator.fullMatches(clues[clueIndex], row)
+        return row.count == cells.count && ((try? regex.wholeMatch(in: row)) != nil)
     }
 
     // MARK: - Lines

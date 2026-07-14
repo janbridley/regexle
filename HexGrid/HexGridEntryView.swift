@@ -22,14 +22,18 @@ struct HexGridEntryView: View {
 
     let n: Int
     let seed: UInt64
+    let onNext: () -> Void
     @State private var puzzle: HexPuzzle
     @State private var cursor = HexCursor()
     @State private var solveProgress: CGFloat = 0  // 0→1 reveal of the solve border
+    @State private var pulse = false  // celebration pulse after the outline completes
+    @State private var showWin = false  // reveals the "You Win!" card
     @FocusState private var focused: Int?
 
-    init(n: Int, seed: UInt64) {
+    init(n: Int, seed: UInt64, onNext: @escaping () -> Void) {
         self.n = n
         self.seed = seed
+        self.onNext = onNext
         _puzzle = State(initialValue: HexPuzzle(n: n, seed: seed))
     }
 
@@ -66,6 +70,7 @@ struct HexGridEntryView: View {
                 .stroke(solvedColor, style: StrokeStyle(
                     lineWidth: max(2, s * 0.12), lineCap: .round, lineJoin: .round))
             }
+            .scaleEffect(pulse ? 1.06 : 1.0)  // celebration pulse after the outline completes
         }
         .background(Color.white)
         .onAppear { if focused == nil { focused = 0 } }
@@ -73,9 +78,39 @@ struct HexGridEntryView: View {
             if solved {
                 withAnimation(.linear(duration: Double(n))) {
                     solveProgress = 1
+                } completion: {
+                    guard puzzle.isFullySolved else { return }
+                    // Pulse the board, then flash the "You Win!" card.
+                    withAnimation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
+                        pulse = true
+                    }
+                    withAnimation(.easeOut(duration: 0.5).delay(0.8)) {
+                        showWin = true
+                    }
                 }
             } else {
                 solveProgress = 0  // unsolved (e.g. edited) → reset, ready to replay
+                pulse = false
+                showWin = false
+            }
+        }
+        .overlay {
+            if showWin {
+                ZStack {
+                    Rectangle().fill(.black.opacity(0.4))
+                    VStack(spacing: 16) {
+                        Text("You Win!")
+                            .font(.largeTitle).bold()
+                            .foregroundStyle(solvedColor)
+                        Button("Next Puzzle") { onNext() }
+                            .buttonStyle(.borderedProminent)
+                            .tint(solvedColor)
+                    }
+                    .padding(32)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 20))
+                    .shadow(radius: 12)
+                }
+                .transition(.opacity)
             }
         }
     }

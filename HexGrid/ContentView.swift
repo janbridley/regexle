@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 16) {
             // `.id("\(n)-\(seed)")` rebuilds the entry grid when either changes.
-            HexGridEntryView(n: n, seed: seed)
+            HexGridEntryView(n: n, seed: seed, onNext: { newPuzzle() })
                 .id("\(n)-\(seed)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 

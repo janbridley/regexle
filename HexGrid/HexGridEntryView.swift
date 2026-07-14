@@ -108,7 +108,6 @@ struct HexGridEntryView: View {
                     }
                     .padding(32)
                     .background(.white, in: RoundedRectangle(cornerRadius: 20))
-                    .shadow(radius: 12)
                 }
                 .transition(.opacity)
             }

@@ -80,9 +80,12 @@ struct HexGridEntryView: View {
                     solveProgress = 1
                 } completion: {
                     guard puzzle.isFullySolved else { return }
-                    // Pulse the board, then flash the "You Win!" card.
-                    withAnimation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
+                    // Pulse the board twice (up-down × 2); the "You Win!" card rises
+                    // with the second pulse.
+                    withAnimation(.easeInOut(duration: 0.4).repeatCount(4, autoreverses: true)) {
                         pulse = true
+                    } completion: {
+                        pulse = false  // model back to rest (1.0), matching the autoreverse end
                     }
                     withAnimation(.easeOut(duration: 0.5).delay(0.8)) {
                         showWin = true

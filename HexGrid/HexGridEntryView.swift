@@ -75,6 +75,7 @@ struct HexGridEntryView: View {
                 .stroke(solvedColor, style: StrokeStyle(
                     lineWidth: max(2, s * 0.12), lineCap: .round, lineJoin: .round))
             }
+            .modifier(Zoomable(viewport: CGSize(width: CGFloat(w), height: CGFloat(h))))
             .scaleEffect(pulse ? 1.06 : 1.0)  // celebration pulse after the outline completes
         }
         .background(Color.white)
@@ -286,4 +287,100 @@ private struct ClueLabel: View {
             .rotationEffect(.degrees(rotation))
             .position(position)
     }
+}
+
+// MARK: - Native-style pinch-zoom + drag-pan
+
+/// Pinch to zoom and drag to pan the board, the way UIScrollView does it: the zoom
+/// anchors at the pinch midpoint (the content under your fingers stays put), the drag
+/// flings with momentum and springs back within bounds, and cell taps stay instant.
+private struct Zoomable: ViewModifier {
+    let viewport: CGSize
+    var minZoom: CGFloat = 1
+    var maxZoom: CGFloat = 3
+
+    @State private var zoom: CGFloat = 1
+    @State private var pan: CGSize = .zero
+    @GestureState private var drag: CGSize = .zero
+    @GestureState private var pinch: Pinch?
+
+    /// A live pinch: the cumulative scale factor and the midpoint as a vector from the
+    /// viewport center (so the anchor math can keep that point fixed on screen).
+    private struct Pinch {
+        let magnification: CGFloat
+        let anchor: CGSize
+    }
+
+    /// Keep the board from being dragged past the viewport edges at zoom `z`. At zoom 1
+    /// the allowed range collapses to zero, so the board can't stray off-center.
+    private func clamp(_ p: CGSize, for z: CGFloat) -> CGSize {
+        let maxX = ((z - 1) * viewport.width) / 2
+        let maxY = ((z - 1) * viewport.height) / 2
+        return CGSize(
+            width: Swift.min(maxX, Swift.max(-maxX, p.width)),
+            height: Swift.min(maxY, Swift.max(-maxY, p.height)))
+    }
+
+    func body(content: Content) -> some View {
+        let scale: CGFloat
+        let offset: CGSize
+        if let p = pinch {
+            // Pinch-anchored transform: keep the midpoint fixed while scaling.
+            let clamped = Swift.min(maxZoom, Swift.max(minZoom, zoom * p.magnification))
+            let m = clamped / zoom
+            scale = clamped
+            offset = pan * m + p.anchor * (1 - m)
+        } else {
+            scale = zoom
+            offset = pan + drag
+        }
+        return content
+            .scaleEffect(scale, anchor: .center)
+            .offset(offset)
+            // `simultaneousGesture` so cell taps/focus are never blocked: a touch that
+            // moves pans, a touch that doesn't selects a cell.
+            .simultaneousGesture(dragGesture.simultaneously(with: pinchGesture))
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .updating($drag) { value, state, _ in state = value.translation }
+            .onEnded { value in
+                // Fling with the release velocity, then spring back inside bounds.
+                let target = pan + value.translation + value.velocity * 0.25
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                    pan = clamp(target, for: zoom)
+                }
+            }
+    }
+
+    private var pinchGesture: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { value, state, _ in
+                state = Pinch(
+                    magnification: value.magnification,
+                    anchor: pointy(value.startAnchor))
+            }
+            .onEnded { value in
+                let clamped = Swift.min(maxZoom, Swift.max(minZoom, zoom * value.magnification))
+                let m = clamped / zoom
+                withAnimation(.easeOut(duration: 0.2)) {
+                    zoom = clamped
+                    pan = clamp(pan * m + pointy(value.startAnchor) * (1 - m), for: clamped)
+                }
+            }
+    }
+
+    /// UnitPoint (0…1 in the view) → vector from the viewport center, in points.
+    private func pointy(_ u: UnitPoint) -> CGSize {
+        CGSize(width: (u.x - 0.5) * viewport.width, height: (u.y - 0.5) * viewport.height)
+    }
+}
+
+private func + (lhs: CGSize, rhs: CGSize) -> CGSize {
+    CGSize(width: lhs.width + rhs.width, height: lhs.height + rhs.height)
+}
+
+private func * (vector: CGSize, scalar: CGFloat) -> CGSize {
+    CGSize(width: vector.width * scalar, height: vector.height * scalar)
 }

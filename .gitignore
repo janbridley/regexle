@@ -8,6 +8,7 @@
 build/
 DerivedData/
 *.hmap
+bench_results.csv
 
 xcuserdata/
 *.xcuserstate

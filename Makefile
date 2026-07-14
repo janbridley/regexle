@@ -3,6 +3,7 @@
 #   make build   compile the iOS app (xcodebuild, no simulator needed)
 #   make test    run the geometry unit tests (swift test)
 #   make run     launch the grid in a native macOS window (swift run HexGridMac)
+#   make bench   benchmark generation + matching for n=2…8 (release build)
 #   make clean   remove build artifacts
 #
 # The app and the tests share one portable geometry core (Sources/HexGridCore),
@@ -19,7 +20,7 @@ SDK      := iphoneos
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build test run clean
+.PHONY: help build test run bench clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-8s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -39,6 +40,9 @@ test: ## Run unit tests on the geometry core
 
 run: ## Launch the grid in a native, resizable macOS window
 	swift run HexGridMac
+
+bench: ## Benchmark generation + matching for n=2–8 (prints charts + CSV)
+	swift run -c release bench
 
 clean: ## Remove build artifacts
 	xcodebuild -project $(PROJECT) clean || true

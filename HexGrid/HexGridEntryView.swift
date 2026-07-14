@@ -56,8 +56,8 @@ struct HexGridEntryView: View {
         self.onLettersChange = onLettersChange
         _puzzle = State(initialValue: HexPuzzle(
             n: n, counter: counter, initialLetters: initialLetters, locked: locked))
-        // A locked (historically solved) puzzle shows its border already drawn, with no
-        // animation — it starts solved, so `.onChange` never fires and no popup appears.
+        // A locked puzzle shows its border already drawn, with no animation — it starts
+        // solved, so `.onChange` never fires and no popup appears.
         _solveProgress = State(initialValue: locked ? 1 : 0)
     }
 
@@ -211,9 +211,8 @@ struct HexGridEntryView: View {
     /// edge by `gap + halfWidth`, so the half reaching back lands at a fixed gap.
     private func labels(s: Double, origin: HexPoint) -> some View {
         // Size the font so the longest clue fills the margin (`clueClearance·s`),
-        // capped at the cell-letter size so clues never dwarf the grid. Because the
-        // cap no longer shrinks with `s`, raising `clueClearance` reliably trades
-        // smaller cells for larger text.
+        // capped at the cell-letter size so clues never dwarf the grid. Raising
+        // `clueClearance` trades smaller cells for larger text.
         let longest = max(1, puzzle.clues.map { $0.count }.max() ?? 1)
         let fitAdvance = clueClearance * s / Double(longest + 1)
         let charAdvance = min(0.48 * s, fitAdvance)  // ≈ SF Mono glyph advance
@@ -253,7 +252,7 @@ struct HexGridEntryView: View {
             onTap: {
                 setCursor(cursor.didTap(i, in: puzzle))
                 #if os(iOS)
-                if !puzzle.locked { kbActive = true; kbTick += 1 }
+                if !puzzle.locked, !puzzle.isFullySolved { kbActive = true; kbTick += 1 }
                 #endif
             })
     }
@@ -282,9 +281,9 @@ struct HexGridEntryView: View {
     /// Hardware-key handler (macOS only in practice — `.onKeyPress` is attached to cells
     /// only on macOS). Routes into the shared cell logic at cell `i`.
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {
-        // Historically solved puzzles are immutable at the view layer (the store rejects
-        // writes for non-active counters too).
-        if puzzle.locked { return .ignored }
+        // Locked puzzles are immutable at the view layer (the store rejects writes for
+        // non-active counters too).
+        if puzzle.locked || puzzle.isFullySolved { return .ignored }
         let delete =
             press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
@@ -302,14 +301,14 @@ struct HexGridEntryView: View {
     /// Shared by the hardware-key handler (`handle`, macOS) and the software-keyboard
     /// capture (iOS) so both input paths feed identical cell logic.
     private func typeLetter(_ ch: String, at i: Int) {
-        guard !puzzle.locked else { return }
+        guard !puzzle.locked, !puzzle.isFullySolved else { return }
         puzzle.letters[i] = ch
         setCursor(cursor.didType(i, in: puzzle))
         onLettersChange(puzzle.letters)
     }
 
     private func deleteLetter(at i: Int) {
-        guard !puzzle.locked else { return }
+        guard !puzzle.locked, !puzzle.isFullySolved else { return }
         if !puzzle.letters[i].isEmpty {
             puzzle.letters[i] = ""
         } else if let prev = cursor.backspaceTarget(from: i, in: puzzle) {
@@ -393,9 +392,8 @@ private struct ClueLabel: View {
 /// flings with momentum and springs back within bounds, and cell taps stay instant.
 ///
 /// This is a container `View` (not a `ViewModifier`) so its `@State` has a stable
-/// structural identity and survives the parent `GeometryReader`'s re-layouts (e.g. when
-/// the keyboard appears/disappears). Owning the zoom/pan state in a `ViewModifier`
-/// applied via `.modifier()` was unstable — it reset on every render.
+/// structural identity and survives the parent `GeometryReader`'s re-layouts (e.g.
+/// when the keyboard appears/disappears).
 private struct ZoomableContainer<Content: View>: View {
     let viewport: CGSize
     var minZoom: CGFloat = 1

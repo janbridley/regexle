@@ -51,7 +51,7 @@ final class PuzzleStore: ObservableObject {
 
     var solvedCount: Int { Self.solvedCount(in: progress, n: n) }
     var activeCounter: Int { Self.activeCounter(of: progress, n: n) }
-    /// A viewed counter below the active one is a historically solved (locked) puzzle.
+    /// A viewed counter below the active one is a locked, already-solved puzzle.
     var viewedIsSolved: Bool { viewedCounter < activeCounter }
 
     // MARK: - Navigation

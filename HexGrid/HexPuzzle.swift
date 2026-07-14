@@ -12,8 +12,8 @@ import Foundation
 struct HexPuzzle {
     let n: Int
     let counter: Int
-    /// True for a historically solved puzzle: it renders pre-filled (with the user's
-    /// stored solution) and ignores all input.
+    /// True for a locked puzzle: it renders pre-filled (with the user's stored
+    /// solution) and ignores all input.
     let locked: Bool
     let topology: HexBoardTopology
     let clues: [String]

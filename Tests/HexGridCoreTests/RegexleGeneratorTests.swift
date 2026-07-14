@@ -4,8 +4,7 @@ import XCTest
 final class RegexleGeneratorTests: XCTestCase {
 
     // MARK: - Parity invariant (load-bearing)
-    // Every clue must full-match its solution line — the regexle backend's bug was
-    // verifying with a prefix match. This test makes the fix executable.
+    // Every clue must full-match its solution line. This test pins the invariant.
 
     func testParityInvariant() {
         let seeds: [UInt64] = [0, 1, 7, 42, 9999, 0xDEAD_BEEF_CAFE_BABE]

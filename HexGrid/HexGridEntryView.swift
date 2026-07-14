@@ -16,13 +16,15 @@ private let clueColor = Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 2
 struct HexGridEntryView: View {
 
     let n: Int
+    let seed: UInt64
     @State private var puzzle: HexPuzzle
     @State private var cursor = HexCursor()
     @FocusState private var focused: Int?
 
-    init(n: Int) {
+    init(n: Int, seed: UInt64) {
         self.n = n
-        _puzzle = State(initialValue: HexPuzzle(n: n))
+        self.seed = seed
+        _puzzle = State(initialValue: HexPuzzle(n: n, seed: seed))
     }
 
     var body: some View {
@@ -153,7 +155,7 @@ struct HexGridEntryView: View {
             return .handled
         }
         if let ch = press.characters.first, ch.isLetter {
-            puzzle.letters[i] = String(ch.lowercased())
+            puzzle.letters[i] = String(ch.uppercased())
             focused = cursor.didType(i, in: puzzle)
             return .handled
         }

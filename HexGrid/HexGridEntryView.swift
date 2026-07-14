@@ -11,8 +11,10 @@ private let hexOutline = Color(red: 0.6, green: 0.6, blue: 0.6)  // inactive hex
 private let solvedColor = Color(red: 0x00 / 255, green: 0xC9 / 255, blue: 0xA4 / 255)  // #00C9A4 — solved clue
 private let clueColor = Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255)  // #4A4453 — clue text
 
-/// Margin (in hex-radius units) reserved around the board for clue labels.
-private let clueClearance: Double = 4.5
+/// Margin (in hex-radius units) reserved around the board for clue labels. This is
+/// the cell-vs-text tradeoff knob: larger = smaller cells, larger clue text (and
+/// vice versa). Font is capped at the cell-letter size, so it never dwarfs the grid.
+private let clueClearance: Double = 6.0
 
 /// Single-letter entry grid with clue strings on perimeter edges {0, 2, 4}.
 /// Type to advance, Backspace to step back.
@@ -87,14 +89,13 @@ struct HexGridEntryView: View {
     /// exactly one glyph out from the hex edge: the center is pushed past the
     /// edge by `gap + halfWidth`, so the half reaching back lands at a fixed gap.
     private func labels(s: Double, origin: HexPoint) -> some View {
-        // Size the font so the longest clue fits the margin. A clue's far edge sits
-        // `charAdvance · (1 + count)` out from the board edge, so capping charAdvance
-        // to fit the longest clue keeps every label on screen. Short boards keep the
-        // natural glyph size (capped at `0.3·s`).
+        // Size the font so the longest clue fills the margin (`clueClearance·s`),
+        // capped at the cell-letter size so clues never dwarf the grid. Because the
+        // cap no longer shrinks with `s`, raising `clueClearance` reliably trades
+        // smaller cells for larger text.
         let longest = max(1, puzzle.clues.map { $0.count }.max() ?? 1)
-        let naturalAdvance = 0.3 * s
         let fitAdvance = clueClearance * s / Double(longest + 1)
-        let charAdvance = min(naturalAdvance, fitAdvance)  // ≈ SF Mono glyph advance
+        let charAdvance = min(0.48 * s, fitAdvance)  // ≈ SF Mono glyph advance
         let fontSize = charAdvance / 0.6
         return ForEach(Array(puzzle.clueEdges.enumerated()), id: \.offset) { idx, e in
             clueLabel(

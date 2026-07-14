@@ -47,14 +47,14 @@ public enum RegexleGenerator {
         var rng = SFC64(seed: seed)
         let topo = HexBoardTopology(n: n)
 
-        // 1. Fill every cell with a random uppercase letter (the solution).
+        // Fill every cell with a random uppercase letter (the solution).
         var solution: [String] = []
         solution.reserveCapacity(topo.order.count)
         for _ in topo.order {
             solution.append(randomChar(using: &rng))
         }
 
-        // 2. One verified clue per line, read in the same order the checker reads.
+        // One verified clue per line, read in the same order the checker reads.
         var clues: [String] = []
         clues.reserveCapacity(topo.clueEdges.count)
         for i in 0..<topo.clueEdges.count {
@@ -69,8 +69,8 @@ public enum RegexleGenerator {
 
     /// Build a clue that full-matches `fullStr`. Tries randomized candidates up to
     /// `maxAttempts`, rejecting any that don't compile, don't full-match, or exceed
-    /// the length budget (so clues fit the view). Falls back to provably-matching
-    /// short patterns so termination and the parity invariant hold by construction.
+    /// the length budget (so clues fit the view). Falls back to simple short patterns
+    /// when the system is stuck in some overconstrained state.
     private static func makeClue(for fullStr: String, difficulty: Double,
                                  maxAttempts: Int, using rng: inout SFC64) -> String {
         let len = fullStr.count

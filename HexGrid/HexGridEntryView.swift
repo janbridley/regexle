@@ -555,16 +555,21 @@ private func * (vector: CGSize, scalar: CGFloat) -> CGSize {
 
     override var canBecomeFirstResponder: Bool { true }
 
+    // Called by the system on every backspace press (including on an empty field) via
+    // UIKeyInput — the reliable backspace signal. The empty-replacementString path in
+    // the delegate did not fire reliably for this always-empty field.
+    override func deleteBackward() {
+      onInput?(.delete)
+    }
+
     func textField(
       _ tf: UITextField, shouldChangeCharactersIn range: NSRange,
       replacementString string: String
     ) -> Bool {
-      if string.isEmpty {
-        onInput?(.delete)  // backspace
-      } else if let ch = string.first, ch.isLetter {
+      if let ch = string.first, ch.isLetter {
         onInput?(.letter(String(ch).uppercased()))
       }
-      return false  // never accumulate text
+      return false  // never accumulate text (backspace handled in deleteBackward)
     }
   }
 #endif

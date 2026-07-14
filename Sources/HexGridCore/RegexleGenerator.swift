@@ -6,14 +6,10 @@ import Foundation
 /// One generated puzzle: `clues` is parallel to `HexBoardTopology.clueEdges`, and
 /// `solution` is parallel to `HexBoardTopology.order` (one uppercase letter per cell).
 public struct GeneratedPuzzle: Equatable {
-    public let n: Int
-    public let seed: UInt64
     public let clues: [String]
     public let solution: [String]
 
-    public init(n: Int, seed: UInt64, clues: [String], solution: [String]) {
-        self.n = n
-        self.seed = seed
+    public init(clues: [String], solution: [String]) {
         self.clues = clues
         self.solution = solution
     }
@@ -63,7 +59,7 @@ public enum RegexleGenerator {
             clues.append(makeClue(for: fullStr, difficulty: difficulty,
                                   maxAttempts: maxAttemptsPerClue, using: &rng))
         }
-        return GeneratedPuzzle(n: n, seed: seed, clues: clues, solution: solution)
+        return GeneratedPuzzle(clues: clues, solution: solution)
     }
 
     // MARK: - Per-clue generation

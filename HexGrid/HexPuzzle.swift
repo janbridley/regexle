@@ -47,11 +47,6 @@ struct HexPuzzle {
         self.letters = letters
     }
 
-    /// Convenience with a random counter (SwiftUI previews / first launch).
-    init(n: Int) {
-        self.init(n: n, counter: Int.random(in: 1...1_000_000), initialLetters: [], locked: false)
-    }
-
     /// True when every clue is solved.
     var isFullySolved: Bool { (0..<clues.count).allSatisfy { isSolved(at: $0) } }
 

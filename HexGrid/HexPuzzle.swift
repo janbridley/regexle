@@ -11,12 +11,15 @@ import Foundation
 // NOTE: puzzles are not *uniquely* solvable, as this is NP complete.
 struct HexPuzzle {
     let n: Int
-    let seed: UInt64
+    let counter: Int
+    /// True for a historically solved puzzle: it renders pre-filled (with the user's
+    /// stored solution) and ignores all input.
+    let locked: Bool
     let topology: HexBoardTopology
     let clues: [String]
     /// Each clue's regex compiled exactly once (at init) and reused by `isSolved`
     private let compiledClues: [Regex<AnyRegexOutput>?]
-    let solution: [String]  // parallel to `order`; the intended fill (hints / self-check)
+    let solution: [String]  // parallel to `order`; the canonical fill (hints / self-check)
     var letters: [String]   // the player's input, parallel to `order`
 
     var order: [(q: Int, r: Int)] { topology.order }
@@ -24,20 +27,29 @@ struct HexPuzzle {
     private var cellIndex: [String: Int] { topology.cellIndex }
     private var grid: HexGrid { topology.grid }
 
-    init(n: Int, seed: UInt64, difficulty: Double = 0.5) {
+    /// Build the puzzle identified by `(n, counter)`. Clues are regenerated from the RNG
+    /// state (`secondSeed: n` decorrelates sizes); `initialLetters` is supplied by the
+    /// store — either the user's stored solution (for a locked historical puzzle) or the
+    /// in-progress typing (for the active one). It is padded/truncated to `order.count`.
+    init(n: Int, counter: Int, initialLetters: [String], locked: Bool, difficulty: Double = 0.5) {
         self.n = n
-        self.seed = seed
+        self.counter = counter
+        self.locked = locked
         self.topology = HexBoardTopology(n: n)
-        let generated = RegexleGenerator.generate(n: n, seed: seed, difficulty: difficulty)
+        let generated = RegexleGenerator.generate(
+            n: n, seed: UInt64(counter), secondSeed: UInt64(n), difficulty: difficulty)
         self.clues = generated.clues
         self.compiledClues = generated.clues.map { try? Regex($0) }
         self.solution = generated.solution
-        self.letters = Array(repeating: "", count: topology.order.count)
+        let count = topology.order.count
+        var letters = Array(initialLetters.prefix(count))
+        while letters.count < count { letters.append("") }
+        self.letters = letters
     }
 
-    /// Convenience with a random seed (SwiftUI previews / first launch).
+    /// Convenience with a random counter (SwiftUI previews / first launch).
     init(n: Int) {
-        self.init(n: n, seed: UInt64.random(in: 0..<UInt64.max))
+        self.init(n: n, counter: Int.random(in: 1...1_000_000), initialLetters: [], locked: false)
     }
 
     /// True when every clue is solved.

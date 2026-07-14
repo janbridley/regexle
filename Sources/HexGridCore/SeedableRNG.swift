@@ -1,16 +1,20 @@
 /// The "Small Fast Chaotic" PRNG (originally by Chris Doty-Humphrey)
-/// Seeded from a single `UInt64` as `initialize(seed, 0, 0, 1)`, which discards the
-/// first 12 outputs to avoid correlations between similar seeds.
+/// Seeded as `initialize(seed, second, 0, 1)`, which discards the first 12 outputs to
+/// avoid correlations between similar seeds. The `second` word loads the `b` lane, so
+/// two puzzles that share a counter but differ in size (the app passes `second: n`) get
+/// uncorrelated streams. It defaults to 0, matching the original single-seed behavior.
 public struct SFC64: RandomNumberGenerator {
     private var a: UInt64
     private var b: UInt64
     private var c: UInt64
     private var counter: UInt64
 
-    /// Seed from a single 64-bit value (mirrors `seed_from_u64`).
-    public init(seed: UInt64) {
+    /// Seed from a primary 64-bit value (mirrors `seed_from_u64`) plus an optional second
+    /// word that loads the `b` lane. `second == 0` reproduces the historical single-seed
+    /// stream exactly, so existing call sites and tests are unaffected.
+    public init(seed: UInt64, second: UInt64 = 0) {
         self.a = seed
-        self.b = 0
+        self.b = second
         self.c = 0
         self.counter = 1
         for _ in 0..<12 { _ = step() }   // discard 12 warm-up outputs

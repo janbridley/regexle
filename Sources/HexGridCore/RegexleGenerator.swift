@@ -40,11 +40,12 @@ public enum RegexleGenerator {
     public static func generate(
         n: Int,
         seed: UInt64,
+        secondSeed: UInt64 = 0,
         difficulty: Double = 0.5,
         maxAttemptsPerClue: Int = 64
     ) -> GeneratedPuzzle {
         precondition(n >= 1, "n must be ≥ 1")
-        var rng = SFC64(seed: seed)
+        var rng = SFC64(seed: seed, second: secondSeed)
         let topo = HexBoardTopology(n: n)
 
         // Fill every cell with a random uppercase letter (the solution).

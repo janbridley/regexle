@@ -15,6 +15,7 @@
 		F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */; };
 		F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */; };
 		F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */; };
+		F1F1F1F1F1F1F1F1F1F1000C /* PuzzleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000C /* PuzzleStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedableRNG.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexBoardTopology.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexleGenerator.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E1000C /* PuzzleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */,
 				E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */,
 				E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */,
+				E1E1E1E1E1E1E1E1E1E1000C /* PuzzleStore.swift */,
 			);
 			path = HexGrid;
 			sourceTree = "<group>";
@@ -158,6 +161,7 @@
 				F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F1000C /* PuzzleStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

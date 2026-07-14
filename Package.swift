@@ -24,6 +24,7 @@ let package = Package(
                 "HexGrid/HexCursor.swift",
                 "HexGrid/HexGridEntryView.swift",
                 "HexGrid/ContentView.swift",
+                "HexGrid/PuzzleStore.swift",
                 "Sources/macApp",
             ]
         ),

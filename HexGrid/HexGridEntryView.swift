@@ -5,11 +5,11 @@ import SwiftUI
 #endif
 
 // MARK: - Palette
-private let focusOutline = Color(red: 0xF9 / 255, green: 0xF8 / 255, blue: 0x71 / 255)  // #F9F871 — focused cell
-private let rowMateFill = Color(red: 0xAF / 255, green: 0xA8 / 255, blue: 0xBA / 255)  // #AFA8BA — row-mate highlight
-private let hexOutline = Color(red: 0.6, green: 0.6, blue: 0.6)  // inactive hex stroke
-private let solvedColor = Color(red: 0x00 / 255, green: 0xC9 / 255, blue: 0xA4 / 255)  // #00C9A4 — solved clue
-private let clueColor = Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255)  // #4A4453 — clue text
+let focusOutline = Color(red: 0xF9 / 255, green: 0xF8 / 255, blue: 0x71 / 255)  // #F9F871 — focused cell
+let rowMateFill = Color(red: 0xAF / 255, green: 0xA8 / 255, blue: 0xBA / 255)  // #AFA8BA — row-mate highlight
+let hexOutline = Color(red: 0.6, green: 0.6, blue: 0.6)  // inactive hex stroke
+let solvedColor = Color(red: 0x00 / 255, green: 0xC9 / 255, blue: 0xA4 / 255)  // #00C9A4 — solved clue
+let clueColor = Color(red: 0x4A / 255, green: 0x44 / 255, blue: 0x53 / 255)  // #4A4453 — clue text
 
 /// Margin (in hex-radius units) reserved around the board for clue labels. This is
 /// the cell-vs-text tradeoff knob: larger = smaller cells, larger clue text (and
@@ -21,20 +21,25 @@ private let clueClearance: Double = 6.0
 struct HexGridEntryView: View {
 
     let n: Int
-    let seed: UInt64
     let onNext: () -> Void
+    let onLettersChange: ([String]) -> Void
     @State private var puzzle: HexPuzzle
     @State private var cursor = HexCursor()
-    @State private var solveProgress: CGFloat = 0  // 0→1 reveal of the solve border
+    @State private var solveProgress: CGFloat  // 0→1 reveal of the solve border
     @State private var pulse = false  // celebration pulse after the outline completes
     @State private var showWin = false  // reveals the "You Win!" card
     @FocusState private var focused: Int?
 
-    init(n: Int, seed: UInt64, onNext: @escaping () -> Void) {
+    init(n: Int, counter: Int, locked: Bool, initialLetters: [String],
+         onNext: @escaping () -> Void, onLettersChange: @escaping ([String]) -> Void) {
         self.n = n
-        self.seed = seed
         self.onNext = onNext
-        _puzzle = State(initialValue: HexPuzzle(n: n, seed: seed))
+        self.onLettersChange = onLettersChange
+        _puzzle = State(initialValue: HexPuzzle(
+            n: n, counter: counter, initialLetters: initialLetters, locked: locked))
+        // A locked (historically solved) puzzle shows its border already drawn, with no
+        // animation — it starts solved, so `.onChange` never fires and no popup appears.
+        _solveProgress = State(initialValue: locked ? 1 : 0)
     }
 
     var body: some View {
@@ -210,6 +215,9 @@ struct HexGridEntryView: View {
     }
 
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {
+        // Historically solved puzzles are immutable at the view layer (the store rejects
+        // writes for non-active counters too).
+        if puzzle.locked { return .ignored }
         let delete =
             press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
@@ -220,11 +228,13 @@ struct HexGridEntryView: View {
                 puzzle.letters[prev] = ""
                 focused = prev
             }
+            onLettersChange(puzzle.letters)
             return .handled
         }
         if let ch = press.characters.first, ch.isLetter {
             puzzle.letters[i] = String(ch.uppercased())
             focused = cursor.didType(i, in: puzzle)
+            onLettersChange(puzzle.letters)
             return .handled
         }
         return .ignored

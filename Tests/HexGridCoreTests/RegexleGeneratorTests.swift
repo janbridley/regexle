@@ -130,4 +130,44 @@ final class RegexleGeneratorTests: XCTestCase {
     func testRemoveDuplicateChars() {
         XCTAssertEqual(RegexleGenerator.removeDuplicateChars("(HD|.*|HD)"), "(HD|.*)")
     }
+
+    // MARK: - Two-word seeding (decorrelates puzzle sizes via the `b` lane)
+
+    func testSFC64SecondWordDeterminism() {
+        var r1 = SFC64(seed: 7, second: 4)
+        var r2 = SFC64(seed: 7, second: 4)
+        for _ in 0..<1000 { XCTAssertEqual(r1.next(), r2.next()) }
+    }
+
+    func testSFC64SecondWordDiverges() {
+        var r1 = SFC64(seed: 7, second: 4)
+        var r2 = SFC64(seed: 7, second: 5)
+        var differ = false
+        for _ in 0..<100 { if r1.next() != r2.next() { differ = true; break } }
+        XCTAssertTrue(differ)
+    }
+
+    // `second == 0` must reproduce the original single-seed stream exactly, so legacy
+    // call sites and saved puzzles stay valid.
+    func testSFC64SecondDefaultMatchesSingleSeed() {
+        var r1 = SFC64(seed: 1234)
+        var r2 = SFC64(seed: 1234, second: 0)
+        for _ in 0..<1000 { XCTAssertEqual(r1.next(), r2.next()) }
+    }
+
+    // Same counter, different n ⇒ different puzzle (sizes are uncorrelated).
+    func testSecondSeedDecorrelatesSizes() {
+        XCTAssertNotEqual(
+            RegexleGenerator.generate(n: 4, seed: 1, secondSeed: 4),
+            RegexleGenerator.generate(n: 4, seed: 1, secondSeed: 5))
+    }
+
+    // The app's seed scheme: seed = counter, secondSeed = n.
+    func testCounterReproducibility() {
+        let puzzle: (Int) -> GeneratedPuzzle = { k in
+            RegexleGenerator.generate(n: 4, seed: UInt64(k), secondSeed: 4)
+        }
+        XCTAssertEqual(puzzle(7), puzzle(7))    // deterministic
+        XCTAssertNotEqual(puzzle(7), puzzle(8)) // different counter ⇒ different puzzle
+    }
 }

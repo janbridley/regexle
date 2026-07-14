@@ -75,7 +75,7 @@ public enum RegexleGenerator {
                                  maxAttempts: Int, using rng: inout SFC64) -> String {
         let len = fullStr.count
         if len == 0 { return ".*" }
-        let budget = max(8, 2 * len + 8)
+        let budget = max(8, len + 8)
         for _ in 0..<maxAttempts {
             let candidate = randomRegex(for: fullStr, difficulty: difficulty, using: &rng)
             if candidate.count <= budget && fullMatches(candidate, fullStr) {

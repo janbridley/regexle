@@ -104,10 +104,13 @@ struct HexGridEntryView: View {
         .background {
             Color.white
             #if os(iOS)
-            // Hidden text fields
+            // Hidden text field parked offscreen: a real (hit-testable) first responder
+            // so touch delivery to on-screen controls isn't disrupted, but 1×1 and off the
+            // corner so it never overlaps a button/cell. It can still become first
+            // responder and bring up the keyboard from offscreen.
             KeyboardCapture(active: $kbActive, tick: kbTick) { handleKeyboard($0) }
-                .allowsHitTesting(false)
                 .frame(width: 1, height: 1)
+                .offset(x: -10_000, y: -10_000)
             #endif
         }
         .onAppear {
@@ -435,9 +438,11 @@ private struct ZoomableContainer<Content: View>: View {
         content()
             .scaleEffect(zoom, anchor: .center)
             .offset(pan)
-            // `simultaneousGesture` so cell taps are never blocked: a touch that moves
-            // pans, a touch that doesn't selects a cell.
-            .simultaneousGesture(dragGesture.simultaneously(with: pinchGesture))
+            // Default-priority `.gesture` (not `.simultaneousGesture`): a simultaneous
+            // gesture on this full-screen view was claiming taps meant for controls in
+            // the parent view. With `.gesture`, a touch that moves pans/pinches and a
+            // touch that doesn't reaches the cells (tap wins via the drag's 12px minimum).
+            .gesture(dragGesture.simultaneously(with: pinchGesture))
     }
 
     private var dragGesture: some Gesture {

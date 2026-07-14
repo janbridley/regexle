@@ -444,10 +444,9 @@ private struct ZoomableContainer<Content: View>: View {
     content()
       .scaleEffect(zoom, anchor: .center)
       .offset(pan)
-      // Default-priority `.gesture` (not `.simultaneousGesture`): a simultaneous
-      // gesture on this full-screen view was claiming taps meant for controls in
-      // the parent view. With `.gesture`, a touch that moves pans/pinches and a
-      // touch that doesn't reaches the cells (tap wins via the drag's 12px minimum).
+      // Default-priority `.gesture` (not `.simultaneousGesture`) so a touch that
+      // doesn't move stays free to reach cells and parent controls — the drag only
+      // activates past its 12px minimum.
       .gesture(dragGesture.simultaneously(with: pinchGesture))
   }
 

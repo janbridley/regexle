@@ -1,3 +1,6 @@
+//! This code is ported from Nathaniel Belle's `regexle_generator gitlab`, with
+//! adaptions made to improve performance and function within Swift. See the reference
+//! implementation at https://gitlab.com/Nathaniel.Belles/regexle_generator
 import Foundation
 
 /// One generated puzzle: `clues` is parallel to `HexBoardTopology.clueEdges`, and
@@ -18,9 +21,8 @@ public struct GeneratedPuzzle: Equatable {
 
 /// Generates solvable hex regex-crossword puzzles by the regexle.com method:
 /// fill the grid with random letters, then derive a regex per line from the line's
-/// solution string, verifying each clue **full-matches** its line (the regexle
-/// backend's bug was verifying with a prefix match). Deterministic in
-/// `(n, seed, difficulty)` thanks to `SFC64`.
+/// solution string, verifying each clue **full-matches** its line. Deterministic for a
+/// given `(n, seed, difficulty)`.
 public enum RegexleGenerator {
 
     private static let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")

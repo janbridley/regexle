@@ -136,20 +136,12 @@ final class PuzzleStore: ObservableObject {
   }
 
   /// True when `lettersString` fully solves the active puzzle of size `n`: every cell
-  /// filled and every clue full-matches its line.
+  /// filled and every clue full-matches its line. Reuses `HexPuzzle`'s compiled-regex
+  /// path (`isFullySolved`) so the check stays in one place.
   private static func solvesActive(in p: ProgressV1, n: Int, lettersString: String) -> Bool {
-    let topo = HexBoardTopology(n: n)
-    let generated = RegexleGenerator.generate(
-      n: n, seed: UInt64(activeCounter(of: p, n: n)), secondSeed: UInt64(n))
-    let letters = decode(lettersString, count: topo.order.count)
-    guard letters.allSatisfy({ !$0.isEmpty }) else { return false }
-    for i in 0..<generated.clues.count {
-      guard let line = topo.lineString(forClue: i, letters: letters) else { return false }
-      let cells = topo.grid.rowCells(for: topo.clueEdges[i])
-      guard line.count == cells.count,
-        RegexleGenerator.fullMatches(generated.clues[i], line)
-      else { return false }
-    }
-    return true
+    var puzzle = HexPuzzle(
+      n: n, counter: activeCounter(of: p, n: n), initialLetters: [], locked: false)
+    puzzle.letters = decode(lettersString, count: puzzle.order.count)
+    return puzzle.isFullySolved
   }
 }

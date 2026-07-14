@@ -1,8 +1,6 @@
 import SwiftUI
 
-#if canImport(HexGridCore)
-    import HexGridCore
-#endif
+import HexGridCore
 
 #if os(iOS)
     import UIKit

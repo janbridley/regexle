@@ -1,8 +1,6 @@
 import Foundation
 
-#if canImport(HexGridCore)
-    import HexGridCore
-#endif
+import HexGridCore
 
 /// Scale-invariant puzzle model: topology, clues, the intended solution, and the
 /// player's letters. Built once at unit radius; the owning view scales geometry to

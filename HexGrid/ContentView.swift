@@ -1,8 +1,6 @@
 import SwiftUI
 
-#if canImport(HexGridCore)
-    import HexGridCore  // macOS executable: core is a package dependency
-#endif
+import HexGridCore
 
 struct ContentView: View {
     @StateObject private var store = PuzzleStore()

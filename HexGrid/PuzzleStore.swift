@@ -1,8 +1,6 @@
 import Foundation
 
-#if canImport(HexGridCore)
-    import HexGridCore
-#endif
+import HexGridCore
 
 /// Persisted puzzle progress (local only — no server). Clues regenerate from `(n, counter)`
 /// via the RNG, so only the user's per-puzzle solution text is stored. Each solution is a

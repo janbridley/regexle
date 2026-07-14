@@ -1,6 +1,4 @@
-#if canImport(HexGridCore)
-    import HexGridCore
-#endif
+import HexGridCore
 
 /// The three line directions through a cell.
 enum Axis: Equatable {

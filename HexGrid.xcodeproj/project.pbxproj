@@ -9,28 +9,21 @@
 /* Begin PBXBuildFile section */
 		F1F1F1F1F1F1F1F1F1F10001 /* HexGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */; };
 		F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */; };
-		F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */; };
 		F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */; };
 		F1F1F1F1F1F1F1F1F1F10007 /* HexPuzzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */; };
 		F1F1F1F1F1F1F1F1F1F10008 /* HexCursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */; };
-		F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */; };
-		F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */; };
-		F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */; };
 		F1F1F1F1F1F1F1F1F1F1000C /* PuzzleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000C /* PuzzleStore.swift */; };
 		F1F1F1F1F1F1F1F1F1F1000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000D /* Assets.xcassets */; };
+		9A9A9A9A9A9A9A9A9A9A0003 /* HexGridCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9A9A9A9A9A9A9A9A9A9A0002 /* HexGridCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D0D0D0D0D0D0D0D0D0D00001 /* HexGrid.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HexGrid.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridApp.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGrid.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridEntryView.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexPuzzle.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexCursor.swift; sourceTree = "<group>"; };
-		E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedableRNG.swift; sourceTree = "<group>"; };
-		E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexBoardTopology.swift; sourceTree = "<group>"; };
-		E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexleGenerator.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E1000C /* PuzzleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleStore.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E1000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -40,6 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A9A9A9A9A9A9A9A9A9A0003 /* HexGridCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,7 +44,6 @@
 			isa = PBXGroup;
 			children = (
 				EEEEEEEEEEEEEEEEEEEE0001 /* HexGrid */,
-				EEEEEEEEEEEEEEEEEEEE0002 /* Sources */,
 				CCCCCCCCCCCCCCCCCCCCCCCC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -77,25 +70,6 @@
 			path = HexGrid;
 			sourceTree = "<group>";
 		};
-		EEEEEEEEEEEEEEEEEEEE0002 /* Sources */ = {
-			isa = PBXGroup;
-			children = (
-				EEEEEEEEEEEEEEEEEEEE0003 /* HexGridCore */,
-			);
-			path = Sources;
-			sourceTree = "<group>";
-		};
-		EEEEEEEEEEEEEEEEEEEE0003 /* HexGridCore */ = {
-			isa = PBXGroup;
-			children = (
-				E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */,
-				E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */,
-				E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */,
-				E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */,
-			);
-			path = HexGridCore;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -112,6 +86,9 @@
 			dependencies = (
 			);
 			name = HexGrid;
+			packageProductDependencies = (
+				9A9A9A9A9A9A9A9A9A9A0002 /* HexGridCore */,
+			);
 			productName = HexGrid;
 			productReference = D0D0D0D0D0D0D0D0D0D00001 /* HexGrid.app */;
 			productType = "com.apple.product-type.application";
@@ -135,6 +112,9 @@
 				Base,
 			);
 			mainGroup = BBBBBBBBBBBBBBBBBBBBBBBB;
+			packageReferences = (
+				9A9A9A9A9A9A9A9A9A9A0001 /* HexGrid */,
+			);
 			productRefGroup = CCCCCCCCCCCCCCCCCCCCCCCC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -163,12 +143,8 @@
 				F1F1F1F1F1F1F1F1F1F10001 /* HexGridApp.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */,
-				F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10007 /* HexPuzzle.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10008 /* HexCursor.swift in Sources */,
-				F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */,
-				F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */,
-				F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F1000C /* PuzzleStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -375,6 +351,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		9A9A9A9A9A9A9A9A9A9A0001 /* HexGrid */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ".";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9A9A9A9A9A9A9A9A9A9A0002 /* HexGridCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A9A9A9A9A9A9A9A9A9A0001 /* HexGrid */;
+			productName = HexGridCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AAAAAAAAAAAAAAAAAAAAAAAA /* Project object */;
 }

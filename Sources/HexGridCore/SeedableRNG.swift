@@ -1,5 +1,3 @@
-import Foundation
-
 /// The "Small Fast Chaotic" PRNG (originally by Chris Doty-Humphrey)
 /// Seeded from a single `UInt64` as `initialize(seed, 0, 0, 1)`, which discards the
 /// first 12 outputs to avoid correlations between similar seeds.

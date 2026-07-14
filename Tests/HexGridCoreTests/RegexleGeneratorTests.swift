@@ -146,8 +146,8 @@ final class RegexleGeneratorTests: XCTestCase {
         XCTAssertTrue(differ)
     }
 
-    // `second == 0` must reproduce the original single-seed stream exactly, so legacy
-    // call sites and saved puzzles stay valid.
+    // `second == 0` reproduces the single-seed stream, so the default matches
+    // `init(seed:)`.
     func testSFC64SecondDefaultMatchesSingleSeed() {
         var r1 = SFC64(seed: 1234)
         var r2 = SFC64(seed: 1234, second: 0)

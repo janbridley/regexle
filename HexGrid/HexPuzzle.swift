@@ -2,32 +2,41 @@
     import HexGridCore
 #endif
 
-/// Scale-invariant puzzle model: topology, clues, and the player's letters.
-/// Built once at unit radius; the owning view scales geometry to pixels.
+/// Scale-invariant puzzle model: topology, clues, the intended solution, and the
+/// player's letters. Built once at unit radius; the owning view scales geometry to
+/// pixels. Clues come from `RegexleGenerator` and are guaranteed (by construction
+/// + verification) to full-match the solution lines, so every puzzle is solvable.
+// NOTE: puzzles are not *uniquely* solvable, as this is NP complete.
 struct HexPuzzle {
     let n: Int
-    let order: [(q: Int, r: Int)]  // entry order (boustrophedon)
-    let clueEdges: [PerimeterEdge]  // perimeter edges among {0, 2, 4}, label order
-    let clues: [String]  // one clue per `clueEdges` entry
-    var letters: [String]
+    let seed: UInt64
+    let topology: HexBoardTopology
+    let clues: [String]
+    let solution: [String]  // parallel to `order`; the intended fill (hints / self-check)
+    var letters: [String]   // the player's input, parallel to `order`
 
-    private let cellIndex: [String: Int]  // "q,r" → order index
-    private let grid: HexGrid  // unit grid (radius 1), for row lookups
+    var order: [(q: Int, r: Int)] { topology.order }
+    var clueEdges: [PerimeterEdge] { topology.clueEdges }
+    private var cellIndex: [String: Int] { topology.cellIndex }
+    private var grid: HexGrid { topology.grid }
 
-    init(n: Int) {
+    init(n: Int, seed: UInt64, difficulty: Double = 0.5) {
         self.n = n
-        let g = HexGrid(n: n, radius: 1)
-        self.grid = g
-        let cells = g.cellsBoustrophedon()
-        self.order = cells
-        self.cellIndex = Dictionary(
-            uniqueKeysWithValues:
-                cells.enumerated().map { ("\($1.q),\($1.r)", $0) })
-        let edges = g.perimeterEdges().filter { [0, 2, 4].contains($0.edge) }
-        self.clueEdges = edges
-        self.clues = edges.map { Self.randomString(g.rowLength(of: $0)) }
-        self.letters = Array(repeating: "", count: cells.count)
+        self.seed = seed
+        self.topology = HexBoardTopology(n: n)
+        let generated = RegexleGenerator.generate(n: n, seed: seed, difficulty: difficulty)
+        self.clues = generated.clues
+        self.solution = generated.solution
+        self.letters = Array(repeating: "", count: topology.order.count)
     }
+
+    /// Convenience with a random seed (SwiftUI previews / first launch).
+    init(n: Int) {
+        self.init(n: n, seed: UInt64.random(in: 0..<UInt64.max))
+    }
+
+    /// True when every clue is solved.
+    var isFullySolved: Bool { (0..<clues.count).allSatisfy { isSolved(at: $0) } }
 
     /// Cells sharing the focused cell's horizontal row (same r) or upper-right
     /// diagonal (same q+r) — the two labeled rows it belongs to.
@@ -41,14 +50,14 @@ struct HexPuzzle {
             })
     }
 
-    /// True when the row is fully filled and its letters match the clue's regex.
+    /// True when the line is fully filled and its letters match the clue's regex.
+    /// Reads the line through the same `topology.lineString` chokepoint the
+    /// generator used, so the reading order is identical.
     func isSolved(at clueIndex: Int) -> Bool {
         guard clueIndex >= 0, clueIndex < clues.count else { return false }
+        guard let row = topology.lineString(forClue: clueIndex, letters: letters) else { return false }
         let cells = grid.rowCells(for: clueEdges[clueIndex])
-        let row = cells.compactMap { cellIndex["\($0.q),\($0.r)"] }
-            .map { letters[$0] }
-            .joined()
-        return row.count == cells.count && Self.fullMatch(clues[clueIndex], row)
+        return row.count == cells.count && RegexleGenerator.fullMatches(clues[clueIndex], row)
     }
 
     // MARK: - Lines
@@ -81,20 +90,5 @@ struct HexPuzzle {
         if qa == qb { return .column }
         if qa + ra == qb + rb { return .diagonal }
         return nil
-    }
-
-    // MARK: - Statics
-    private static let alphabet = Array("abcdefghijklmnopqrstuvwxyz")
-
-    /// Random lowercase letters — the clue *patterns* (plain literals today,
-    /// matched through the regex engine so real patterns work later).
-    private static func randomString(_ length: Int) -> String {
-        String((0..<length).map { _ in alphabet.randomElement()! })
-    }
-
-    /// True if `pattern` matches the entirety of `text` (basic regex, stdlib only).
-    private static func fullMatch(_ pattern: String, _ text: String) -> Bool {
-        guard let regex = try? Regex(pattern) else { return false }
-        return text.wholeMatch(of: regex) != nil
     }
 }

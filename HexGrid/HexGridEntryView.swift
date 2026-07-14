@@ -24,6 +24,7 @@ struct HexGridEntryView: View {
     let seed: UInt64
     @State private var puzzle: HexPuzzle
     @State private var cursor = HexCursor()
+    @State private var solveProgress: CGFloat = 0  // 0→1 reveal of the solve border
     @FocusState private var focused: Int?
 
     init(n: Int, seed: UInt64) {
@@ -53,10 +54,30 @@ struct HexGridEntryView: View {
                 ForEach(0..<puzzle.order.count, id: \.self) {
                     cell($0, grid: grid, s: s, origin: origin)
                 }
+                // Solve animation: a thick green border drawn around the board outline,
+                // starting at the top-left, over `n` seconds.
+                Path {
+                    let pts = grid.outlineVertices(originX: origin.x, originY: origin.y)
+                    guard let first = pts.first else { return }
+                    $0.move(to: CGPoint(x: first.x, y: first.y))
+                    for p in pts.dropFirst() { $0.addLine(to: CGPoint(x: p.x, y: p.y)) }
+                }
+                .trim(from: 0, to: solveProgress)
+                .stroke(solvedColor, style: StrokeStyle(
+                    lineWidth: max(2, s * 0.12), lineCap: .round, lineJoin: .round))
             }
         }
         .background(Color.white)
         .onAppear { if focused == nil { focused = 0 } }
+        .onChange(of: puzzle.isFullySolved) { _, solved in
+            if solved {
+                withAnimation(.linear(duration: Double(n))) {
+                    solveProgress = 1
+                }
+            } else {
+                solveProgress = 0  // unsolved (e.g. edited) → reset, ready to replay
+            }
+        }
     }
 
     private func outlines(grid: HexGrid, s: Double, origin: HexPoint) -> some View {

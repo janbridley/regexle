@@ -2,15 +2,18 @@ import Foundation
 
 public struct HexPoint: Equatable {
     public var x, y: Double
-    public init(_ x: Double, _ y: Double) { self.x = x; self.y = y }
+    public init(_ x: Double, _ y: Double) {
+        self.x = x
+        self.y = y
+    }
 }
 
 public struct PerimeterEdge {
     public let q: Int
     public let r: Int
-    public let edge: Int            // 0..<6, edge between vertex `edge` and (edge+1)%6
+    public let edge: Int  // 0..<6, edge between vertex `edge` and (edge+1)%6
     public let midpoint: HexPoint
-    public let outward: HexPoint    // unit outward normal
+    public let outward: HexPoint  // unit outward normal
 }
 
 /// Hexagonal cluster of pointy-top hexagons, `n` per side (3n²−3n+1 cells).
@@ -22,16 +25,20 @@ public struct HexGrid {
 
     public init(n: Int, radius: Double) {
         precondition(n >= 0 && radius >= 0)
-        self.n = n; self.radius = radius
+        self.n = n
+        self.radius = radius
     }
 
     public var cellCount: Int { 3 * n * n - 3 * n + 1 }
-    public var boundsWidth: Double  { Self.sqrt3 * radius * Double(2 * n - 1) }
+    public var boundsWidth: Double { Self.sqrt3 * radius * Double(2 * n - 1) }
     public var boundsHeight: Double { radius * Double(3 * n - 1) }
 
-    public static func radiusFitting(n: Int, width: Double, height: Double, margin: Double = 8) -> Double {
+    public static func radiusFitting(n: Int, width: Double, height: Double, margin: Double = 8)
+        -> Double
+    {
         guard n > 0 else { return 0 }
-        let w = max(0, width - 2 * margin), h = max(0, height - 2 * margin)
+        let w = max(0, width - 2 * margin)
+        let h = max(0, height - 2 * margin)
         return min(w / (sqrt3 * Double(2 * n - 1)), h / Double(3 * n - 1))
     }
 
@@ -74,8 +81,9 @@ public struct HexGrid {
     }
 
     public func center(q: Int, r: Int, originX: Double = 0, originY: Double = 0) -> HexPoint {
-        HexPoint(originX + radius * Self.sqrt3 * (Double(q) + Double(r) / 2),
-                 originY + radius * 1.5 * Double(r))
+        HexPoint(
+            originX + radius * Self.sqrt3 * (Double(q) + Double(r) / 2),
+            originY + radius * 1.5 * Double(r))
     }
 
     public func vertices(centeredAt c: HexPoint) -> [HexPoint] {
@@ -87,7 +95,7 @@ public struct HexGrid {
 
     public func hexagons(inWidth width: Double, height: Double) -> [[HexPoint]] {
         cells().map { center(q: $0.q, r: $0.r, originX: width / 2, originY: height / 2) }
-              .map { vertices(centeredAt: $0) }
+            .map { vertices(centeredAt: $0) }
     }
 
     /// Perimeter edges — those whose axial neighbor is outside the cluster —
@@ -99,14 +107,17 @@ public struct HexGrid {
         var out: [PerimeterEdge] = []
         for (q, r) in cells() {
             for e in 0..<6 {
-                let nq = q + neighbor[e].dq, nr = r + neighbor[e].dr
+                let nq = q + neighbor[e].dq
+                let nr = r + neighbor[e].dr
                 guard !inside(nq, nr) else { continue }
                 let c = center(q: q, r: r, originX: originX, originY: originY)
                 let v = vertices(centeredAt: c)
                 let m = HexPoint((v[e].x + v[(e + 1) % 6].x) / 2, (v[e].y + v[(e + 1) % 6].y) / 2)
                 let d = HexPoint(m.x - c.x, m.y - c.y)
                 let len = (d.x * d.x + d.y * d.y).squareRoot()
-                out.append(PerimeterEdge(q: q, r: r, edge: e, midpoint: m, outward: HexPoint(d.x / len, d.y / len)))
+                out.append(
+                    PerimeterEdge(
+                        q: q, r: r, edge: e, midpoint: m, outward: HexPoint(d.x / len, d.y / len)))
             }
         }
         return out
@@ -117,11 +128,12 @@ public struct HexGrid {
     /// (constant q+r) for edge 4.
     public func rowLength(of edge: PerimeterEdge) -> Int {
         switch edge.edge {
-        case 0:            return min(k, k - edge.q) - max(-k, -k - edge.q) + 1
-        case 2:            return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
-        case 4: let s = edge.q + edge.r
-                         return min(k, s + k) - max(-k, s - k) + 1
-        default:           return n
+        case 0: return min(k, k - edge.q) - max(-k, -k - edge.q) + 1
+        case 2: return min(k, k - edge.r) - max(-k, -k - edge.r) + 1
+        case 4:
+            let s = edge.q + edge.r
+            return min(k, s + k) - max(-k, s - k) + 1
+        default: return n
         }
     }
 
@@ -130,15 +142,83 @@ public struct HexGrid {
     /// upper-right→lower-left (edge 4).
     public func rowCells(for edge: PerimeterEdge) -> [(q: Int, r: Int)] {
         var cells: [(q: Int, r: Int)] = []
-        var q = edge.q, r = edge.r
+        var q = edge.q
+        var r = edge.r
         switch edge.edge {
-        case 0: repeat { cells.append((q, r)); r -= 1 } while inside(q, r)
-                cells.reverse()
-        case 2: repeat { cells.append((q, r)); q += 1 } while inside(q, r)
-        case 4: repeat { cells.append((q, r)); q -= 1; r += 1 } while inside(q, r)
-                cells.reverse()
+        case 0:
+            repeat {
+                cells.append((q, r))
+                r -= 1
+            } while inside(q, r)
+            cells.reverse()
+        case 2:
+            repeat {
+                cells.append((q, r))
+                q += 1
+            } while inside(q, r)
+        case 4:
+            repeat {
+                cells.append((q, r))
+                q -= 1
+                r += 1
+            } while inside(q, r)
+            cells.reverse()
         default: cells.append((q, r))
         }
         return cells
+    }
+
+    /// Ordered vertices of the cluster's outer boundary, starting at the top-left
+    /// vertex and repeating it at the end to close the loop.
+    public func outlineVertices(originX: Double = 0, originY: Double = 0) -> [HexPoint] {
+        let neighbor: [(dq: Int, dr: Int)] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)]
+        var segments: [(HexPoint, HexPoint)] = []
+        for (q, r) in cells() {
+            let vs = vertices(centeredAt: center(q: q, r: r, originX: originX, originY: originY))
+            for e in 0..<6 {
+                let nq = q + neighbor[e].dq
+                let nr = r + neighbor[e].dr
+                guard !inside(nq, nr) else { continue }
+                segments.append((vs[e], vs[(e + 1) % 6]))
+            }
+        }
+        guard !segments.isEmpty else { return [] }
+
+        // Snap-key so shared vertices (computed from neighbouring cells) match exactly.
+        func key(_ p: HexPoint) -> [Int] {
+            [Int((p.x * 10_000).rounded()), Int((p.y * 10_000).rounded())]
+        }
+        var adj: [[Int]: [HexPoint]] = [:]
+        var pointByKey: [[Int]: HexPoint] = [:]
+        for (a, b) in segments {
+            adj[key(a), default: []].append(b)
+            pointByKey[key(a)] = a
+            adj[key(b), default: []].append(a)
+            pointByKey[key(b)] = b
+        }
+
+        // Start at the top-left vertex (leftmost, then topmost).
+        let startKey = pointByKey.keys.min { a, b in
+            let pa = pointByKey[a]!
+            let pb = pointByKey[b]!
+            return pa.x == pb.x ? pa.y < pb.y : pa.x < pb.x
+        }!
+
+        var ordered: [HexPoint] = []
+        var curKey = startKey
+        var prevKey: [Int]? = nil
+        for _ in 0...segments.count {  // bounded: the loop has `segments.count` vertices
+            guard let p = pointByKey[curKey], let nbrs = adj[curKey], !nbrs.isEmpty else { break }
+            ordered.append(p)
+            let next =
+                nbrs.first { candidate in
+                    prevKey.map { key(candidate) != $0 } ?? true
+                } ?? nbrs[0]
+            prevKey = curKey
+            curKey = key(next)
+            if curKey == startKey { break }
+        }
+        if let first = ordered.first { ordered.append(first) }
+        return ordered
     }
 }

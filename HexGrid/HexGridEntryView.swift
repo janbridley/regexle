@@ -322,8 +322,12 @@ struct HexGridEntryView: View {
   private func deleteLetter(at i: Int) {
     guard !puzzle.locked, !puzzle.isFullySolved else { return }
     if !puzzle.letters[i].isEmpty {
+      // Filled cell (e.g. tapped to edit): clear it and step the cursor back one.
       puzzle.letters[i] = ""
+      if let prev = cursor.backspaceTarget(from: i, in: puzzle) { setCursor(prev) }
     } else if let prev = cursor.backspaceTarget(from: i, in: puzzle) {
+      // Empty cell (cursor advanced after typing): clear the previous cell and step
+      // back to it — i.e. undo the last typed letter.
       puzzle.letters[prev] = ""
       setCursor(prev)
     }

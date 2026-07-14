@@ -7,6 +7,7 @@ let package = Package(
   products: [
     .library(name: "HexGridCore", targets: ["HexGridCore"]),
     .executable(name: "HexGridMac", targets: ["HexGridMac"]),
+    .executable(name: "bench", targets: ["bench"]),
   ],
   targets: [
     .target(
@@ -27,6 +28,11 @@ let package = Package(
         "HexGrid/PuzzleStore.swift",
         "Sources/macApp",
       ]
+    ),
+    .executableTarget(
+      name: "bench",
+      dependencies: ["HexGridCore"],
+      path: "Sources/bench"
     ),
     .testTarget(
       name: "HexGridCoreTests",

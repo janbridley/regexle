@@ -101,17 +101,15 @@ struct HexGridEntryView: View {
             }
             .scaleEffect(pulse ? 1.06 : 1.0)  // celebration pulse after the outline completes
         }
-        .background(Color.white)
-        .ignoresSafeArea(.keyboard)  // board does NOT resize when the keyboard shows
-        #if os(iOS)
-        .overlay {
-            // Hidden text field mounted at the top level (outside GeometryReader) so it
-            // survives layout churn and nothing competes with it for first responder.
+        .background {
+            Color.white
+            #if os(iOS)
+            // Hidden text fields
             KeyboardCapture(active: $kbActive, tick: kbTick) { handleKeyboard($0) }
                 .allowsHitTesting(false)
                 .frame(width: 1, height: 1)
+            #endif
         }
-        #endif
         .onAppear {
             if cursorIndex == nil { setCursor(0) }
             #if os(iOS)
@@ -403,15 +401,16 @@ private struct ZoomableContainer<Content: View>: View {
 
     @State private var zoom: CGFloat = 1
     @State private var pan: CGSize = .zero
-    @GestureState private var drag: CGSize = .zero
-    @GestureState private var pinch: Pinch?
 
-    /// A live pinch: the cumulative scale factor and the midpoint as a vector from the
-    /// viewport center (so the anchor math can keep that point fixed on screen).
-    private struct Pinch {
-        let magnification: CGFloat
-        let anchor: CGSize
-    }
+    // Gesture-start snapshots, captured on the first change of each gesture. The live
+    // transform is committed to `@State` continuously during `.onChanged` (rather than
+    // held in `@GestureState` and committed on `.onEnded`), so there is no transient
+    // state to reset when the gesture ends — no "blip back" frame on release.
+    @State private var dragStartPan: CGSize = .zero
+    @State private var dragStarted = false
+    @State private var pinchStartZoom: CGFloat = 1
+    @State private var pinchStartPan: CGSize = .zero
+    @State private var pinchStarted = false
 
     /// Keep the board from being dragged past the viewport edges at zoom `z`. At zoom 1
     /// the allowed range collapses to zero, so the board can't stray off-center.
@@ -423,33 +422,37 @@ private struct ZoomableContainer<Content: View>: View {
             height: Swift.min(maxY, Swift.max(-maxY, p.height)))
     }
 
+    private func clampZoom(_ z: CGFloat) -> CGFloat {
+        Swift.min(maxZoom, Swift.max(minZoom, z))
+    }
+
+    /// UnitPoint (0…1 in the view) → vector from the viewport center, in points.
+    private func anchorVec(_ u: UnitPoint) -> CGSize {
+        CGSize(width: (u.x - 0.5) * viewport.width, height: (u.y - 0.5) * viewport.height)
+    }
+
     var body: some View {
-        let scale: CGFloat
-        let offset: CGSize
-        if let p = pinch {
-            // Pinch-anchored transform: keep the midpoint fixed while scaling.
-            let clamped = Swift.min(maxZoom, Swift.max(minZoom, zoom * p.magnification))
-            let m = clamped / zoom
-            scale = clamped
-            offset = pan * m + p.anchor * (1 - m)
-        } else {
-            scale = zoom
-            offset = pan + drag
-        }
-        return content()
-            .scaleEffect(scale, anchor: .center)
-            .offset(offset)
-            // `simultaneousGesture` so cell taps/focus are never blocked: a touch that
-            // moves pans, a touch that doesn't selects a cell.
+        content()
+            .scaleEffect(zoom, anchor: .center)
+            .offset(pan)
+            // `simultaneousGesture` so cell taps are never blocked: a touch that moves
+            // pans, a touch that doesn't selects a cell.
             .simultaneousGesture(dragGesture.simultaneously(with: pinchGesture))
     }
 
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 12)
-            .updating($drag) { value, state, _ in state = value.translation }
+            .onChanged { value in
+                if !dragStarted {
+                    dragStarted = true
+                    dragStartPan = pan
+                }
+                pan = clamp(dragStartPan + value.translation, for: zoom)
+            }
             .onEnded { value in
-                // Fling with the release velocity, then spring back inside bounds.
-                let target = pan + value.translation + value.velocity * 0.25
+                // Fling with the release velocity, then spring inside bounds.
+                let target = dragStartPan + value.translation + value.velocity * 0.25
+                dragStarted = false
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
                     pan = clamp(target, for: zoom)
                 }
@@ -458,24 +461,24 @@ private struct ZoomableContainer<Content: View>: View {
 
     private var pinchGesture: some Gesture {
         MagnifyGesture()
-            .updating($pinch) { value, state, _ in
-                state = Pinch(
-                    magnification: value.magnification,
-                    anchor: pointy(value.startAnchor))
-            }
-            .onEnded { value in
-                let clamped = Swift.min(maxZoom, Swift.max(minZoom, zoom * value.magnification))
-                let m = clamped / zoom
-                withAnimation(.easeOut(duration: 0.2)) {
-                    zoom = clamped
-                    pan = clamp(pan * m + pointy(value.startAnchor) * (1 - m), for: clamped)
+            .onChanged { value in
+                if !pinchStarted {
+                    pinchStarted = true
+                    pinchStartZoom = zoom
+                    pinchStartPan = pan
                 }
+                // Pinch-anchored: keep the midpoint fixed while scaling.
+                let clamped = clampZoom(pinchStartZoom * value.magnification)
+                let m = clamped / pinchStartZoom
+                let a = anchorVec(value.startAnchor)
+                zoom = clamped
+                pan = clamp(pinchStartPan * m + a * (1 - m), for: clamped)
             }
-    }
-
-    /// UnitPoint (0…1 in the view) → vector from the viewport center, in points.
-    private func pointy(_ u: UnitPoint) -> CGSize {
-        CGSize(width: (u.x - 0.5) * viewport.width, height: (u.y - 0.5) * viewport.height)
+            .onEnded { _ in
+                pinchStarted = false
+                // Committed zoom/pan already hold the final clamped value (updated
+                // continuously during the gesture), so nothing to animate on release.
+            }
     }
 }
 

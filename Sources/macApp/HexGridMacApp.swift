@@ -8,15 +8,15 @@ import SwiftUI
 /// Resize the window to watch the vector grid rescale to any resolution.
 @main
 struct HexGridMacApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+  @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    var body: some Scene {
-        WindowGroup("HexGrid") {
-            ContentView()
-                .frame(minWidth: 320, minHeight: 360)
-        }
-        .defaultSize(width: 640, height: 640)
+  var body: some Scene {
+    WindowGroup("HexGrid") {
+      ContentView()
+        .frame(minWidth: 320, minHeight: 360)
     }
+    .defaultSize(width: 640, height: 640)
+  }
 }
 
 // When launched as a bare executable (swift run) rather than an .app bundle,
@@ -24,10 +24,10 @@ struct HexGridMacApp: App {
 // window is created but never shown. Force a normal activation policy and bring
 // it to the front on launch.
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
-    }
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.activate(ignoringOtherApps: true)
-    }
+  func applicationWillFinishLaunching(_ notification: Notification) {
+    NSApp.setActivationPolicy(.regular)
+  }
+  func applicationDidFinishLaunching(_ notification: Notification) {
+    NSApp.activate(ignoringOtherApps: true)
+  }
 }

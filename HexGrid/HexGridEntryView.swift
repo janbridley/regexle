@@ -130,21 +130,27 @@ struct HexGridEntryView: View {
             }
             ctx.fill(mates, with: .color(rowMateFill))
             var inactive = Path()
+            var focusPath: Path?
             for (i, c) in puzzle.order.enumerated() {
                 let hex = hexPath(c, grid, origin)
                 if i == focused {
-                    ctx.stroke(
-                        hex, with: .color(focusOutline),
-                        style: StrokeStyle(
-                            lineWidth: max(1.5, s * 0.04), lineCap: .round, lineJoin: .round))
+                    focusPath = hex
                 } else {
                     inactive.addPath(hex)
                 }
             }
+            // Inactive outlines first, then the focused yellow outline last so it sits
+            // on top of the shared edges with its neighbors.
             ctx.stroke(
                 inactive, with: .color(hexOutline),
                 style: StrokeStyle(
                     lineWidth: max(0.5, s * 0.018), lineCap: .round, lineJoin: .round))
+            if let focusPath {
+                ctx.stroke(
+                    focusPath, with: .color(focusOutline),
+                    style: StrokeStyle(
+                        lineWidth: max(1.5, s * 0.04), lineCap: .round, lineJoin: .round))
+            }
         }
     }
 

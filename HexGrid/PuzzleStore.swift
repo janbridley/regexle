@@ -81,9 +81,8 @@ final class PuzzleStore: ObservableObject {
     return []
   }
 
-  /// Record the active puzzle's current typing. Writes the active counter only — solved
-  /// puzzles are immutable from the store side too (defense in depth alongside the view
-  /// lock).
+  /// Record the active puzzle's current typing. Writes the active counter only: solved
+  /// puzzles are immutable from the store side too.
   func setLetters(_ letters: [String], forActiveOf n: Int) {
     guard n == self.n, viewedCounter == activeCounter else { return }
     progress.active[n] = Self.encode(letters)

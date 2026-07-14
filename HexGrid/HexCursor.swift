@@ -59,11 +59,16 @@ struct HexCursor {
 
   /// Call on backspace from `cell` once it is empty; returns the cell to clear
   /// and move to. Line-aware when a direction is set, else the snake predecessor.
+  /// In any out-of-range case (no axis, the cell isn't on the locked line, or the
+  /// line-aware neighbor is off the line), it falls back to the snake predecessor
+  /// (`cell - 1`, or `nil` at cell 0) so backspace is never a dead key at a line
+  /// boundary.
   mutating func backspaceTarget(from cell: Int, in puzzle: HexPuzzle) -> Int? {
-    guard let axis else { return cell > 0 ? cell - 1 : nil }
+    guard cell > 0 else { return nil }
+    guard let axis else { return cell - 1 }
     let line = puzzle.line(through: cell, axis: axis)
-    guard let pos = line.firstIndex(of: cell) else { return nil }
+    guard let pos = line.firstIndex(of: cell) else { return cell - 1 }
     let neighbor = forward ? pos - 1 : pos + 1
-    return line.indices.contains(neighbor) ? line[neighbor] : nil
+    return line.indices.contains(neighbor) ? line[neighbor] : cell - 1
   }
 }

@@ -110,7 +110,6 @@ final class PuzzleStore: ObservableObject {
     viewedCounter = activeCounter
   }
 
-
   // MARK: - Encoding (one ASCII char per cell; " " = empty)
 
   static func encode(_ letters: [String]) -> String {

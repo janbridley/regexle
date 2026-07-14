@@ -26,7 +26,7 @@ enum Axis: Equatable {
 /// this is purely additive — nothing changes until the player signals intent.
 ///
 /// This works because two distinct cells share at most one line, so the
-/// two-point gesture is an unambiguous signal (unlike inferring from fill state).
+/// two-point gesture is unambiguous.
 struct HexCursor {
     private(set) var axis: Axis?
     private(set) var forward = true

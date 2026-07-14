@@ -17,13 +17,13 @@ public struct SFC64: RandomNumberGenerator {
     }
 
     /// Advance one step, returning the generated 64-bit value.
-    @discardableResult
+    @discardableResult // We throw away data in the initialization
     private mutating func step() -> UInt64 {
         // Constants: barrel shift 24, right shift 11, left shift 3.
         let out = a &+ b &+ counter
-        a = b ^ (b >> 11)
-        b = c &+ (c << 3)
-        c = ((c << 24) | (c >> 40)) &+ out   // rotate-left(c, 24) for UInt64
+        a = b ^ (b >> 11) // shr 11
+        b = c &+ (c << 3) // shl 3
+        c = ((c << 24) | (c >> 40)) &+ out // Barrel shift 24 (40 = 64-24)
         counter = counter &+ 1   // Weyl increment of 1
         return out
     }

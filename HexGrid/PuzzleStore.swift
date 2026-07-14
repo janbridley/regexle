@@ -60,7 +60,7 @@ final class PuzzleStore: ObservableObject {
     func goNext() { viewedCounter = min(activeCounter, viewedCounter + 1) }
 
     func setN(_ newN: Int) {
-        guard newN != n, newN >= 1 else { return }
+        guard newN != n, (1...8).contains(newN) else { return }
         n = newN
         progress.defaultN = newN
         viewedCounter = activeCounter

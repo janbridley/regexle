@@ -10,6 +10,11 @@
 		F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */; };
 		F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */; };
 		F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */; };
+		F1F1F1F1F1F1F1F1F1F10007 /* HexPuzzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */; };
+		F1F1F1F1F1F1F1F1F1F10008 /* HexCursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */; };
+		F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */; };
+		F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */; };
+		F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +23,11 @@
 		E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGridEntryView.swift; sourceTree = "<group>"; };
 		E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexGrid.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexPuzzle.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexCursor.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedableRNG.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexBoardTopology.swift; sourceTree = "<group>"; };
+		E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexleGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +64,8 @@
 				E1E1E1E1E1E1E1E1E1E10001 /* HexGridApp.swift */,
 				E1E1E1E1E1E1E1E1E1E10002 /* ContentView.swift */,
 				E1E1E1E1E1E1E1E1E1E10006 /* HexGridEntryView.swift */,
+				E1E1E1E1E1E1E1E1E1E10007 /* HexPuzzle.swift */,
+				E1E1E1E1E1E1E1E1E1E10008 /* HexCursor.swift */,
 			);
 			path = HexGrid;
 			sourceTree = "<group>";
@@ -70,6 +82,9 @@
 			isa = PBXGroup;
 			children = (
 				E1E1E1E1E1E1E1E1E1E10005 /* HexGrid.swift */,
+				E1E1E1E1E1E1E1E1E1E10009 /* SeedableRNG.swift */,
+				E1E1E1E1E1E1E1E1E1E1000A /* HexBoardTopology.swift */,
+				E1E1E1E1E1E1E1E1E1E1000B /* RegexleGenerator.swift */,
 			);
 			path = HexGridCore;
 			sourceTree = "<group>";
@@ -138,6 +153,11 @@
 				F1F1F1F1F1F1F1F1F1F10002 /* ContentView.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10006 /* HexGridEntryView.swift in Sources */,
 				F1F1F1F1F1F1F1F1F1F10005 /* HexGrid.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F10007 /* HexPuzzle.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F10008 /* HexCursor.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F10009 /* SeedableRNG.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F1000A /* HexBoardTopology.swift in Sources */,
+				F1F1F1F1F1F1F1F1F1F1000B /* RegexleGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

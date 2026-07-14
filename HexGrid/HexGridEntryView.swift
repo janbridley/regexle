@@ -4,6 +4,10 @@ import SwiftUI
     import HexGridCore
 #endif
 
+#if os(iOS)
+    import UIKit
+#endif
+
 // MARK: - Palette
 let focusOutline = Color(red: 0xF9 / 255, green: 0xF8 / 255, blue: 0x71 / 255)  // #F9F871 — focused cell
 let rowMateFill = Color(red: 0xAF / 255, green: 0xA8 / 255, blue: 0xBA / 255)  // #AFA8BA — row-mate highlight
@@ -28,7 +32,22 @@ struct HexGridEntryView: View {
     @State private var solveProgress: CGFloat  // 0→1 reveal of the solve border
     @State private var pulse = false  // celebration pulse after the outline completes
     @State private var showWin = false  // reveals the "You Win!" card
+
+    /// Which cell is active (the cursor). The single source of truth for the focus ring
+    /// and cursor movement on every platform. It is a plain @State, NOT @FocusState, so
+    /// on iOS nothing competes with the hidden text field for first responder.
+    @State private var cursorIndex: Int?
+    /// On macOS this mirrors `cursorIndex` into SwiftUI's focus system so hardware
+    /// key events (`onKeyPress`) route to the active cell. Unused on iOS.
     @FocusState private var focused: Int?
+
+    #if os(iOS)
+    // Drives the hidden `UITextField` that captures software-keyboard input. `kbTick`
+    // is bumped on each tap so the field (re)becomes first responder even after the user
+    // dismisses the keyboard.
+    @State private var kbActive = false
+    @State private var kbTick = 0
+    #endif
 
     init(n: Int, counter: Int, locked: Bool, initialLetters: [String],
          onNext: @escaping () -> Void, onLettersChange: @escaping ([String]) -> Void) {
@@ -57,31 +76,53 @@ struct HexGridEntryView: View {
                 ))
             let grid = HexGrid(n: n, radius: s)
             let origin = HexPoint(w / 2, h / 2)
-            ZStack {
-                outlines(grid: grid, s: s, origin: origin)
-                labels(s: s, origin: origin)
-                ForEach(0..<puzzle.order.count, id: \.self) {
-                    cell($0, grid: grid, s: s, origin: origin)
+            // A container View (not a ViewModifier) owns the zoom/pan @State, so its
+            // identity is stable and the transform survives the GeometryReader re-layouts
+            // that happen when the keyboard appears/disappears.
+            ZoomableContainer(viewport: CGSize(width: CGFloat(w), height: CGFloat(h))) {
+                ZStack {
+                    outlines(grid: grid, s: s, origin: origin)
+                    labels(s: s, origin: origin)
+                    ForEach(0..<puzzle.order.count, id: \.self) {
+                        cell($0, grid: grid, s: s, origin: origin)
+                    }
+                    // Solve animation: a thick green border drawn around the board outline,
+                    // starting at the top-left, over `n` seconds.
+                    Path {
+                        let pts = grid.outlineVertices(originX: origin.x, originY: origin.y)
+                        guard let first = pts.first else { return }
+                        $0.move(to: CGPoint(x: first.x, y: first.y))
+                        for p in pts.dropFirst() { $0.addLine(to: CGPoint(x: p.x, y: p.y)) }
+                    }
+                    .trim(from: 0, to: solveProgress)
+                    .stroke(solvedColor, style: StrokeStyle(
+                        lineWidth: max(2, s * 0.12), lineCap: .round, lineJoin: .round))
                 }
-                // Solve animation: a thick green border drawn around the board outline,
-                // starting at the top-left, over `n` seconds.
-                Path {
-                    let pts = grid.outlineVertices(originX: origin.x, originY: origin.y)
-                    guard let first = pts.first else { return }
-                    $0.move(to: CGPoint(x: first.x, y: first.y))
-                    for p in pts.dropFirst() { $0.addLine(to: CGPoint(x: p.x, y: p.y)) }
-                }
-                .trim(from: 0, to: solveProgress)
-                .stroke(solvedColor, style: StrokeStyle(
-                    lineWidth: max(2, s * 0.12), lineCap: .round, lineJoin: .round))
             }
-            .modifier(Zoomable(viewport: CGSize(width: CGFloat(w), height: CGFloat(h))))
             .scaleEffect(pulse ? 1.06 : 1.0)  // celebration pulse after the outline completes
         }
         .background(Color.white)
-        .onAppear { if focused == nil { focused = 0 } }
+        .ignoresSafeArea(.keyboard)  // board does NOT resize when the keyboard shows
+        #if os(iOS)
+        .overlay {
+            // Hidden text field mounted at the top level (outside GeometryReader) so it
+            // survives layout churn and nothing competes with it for first responder.
+            KeyboardCapture(active: $kbActive, tick: kbTick) { handleKeyboard($0) }
+                .allowsHitTesting(false)
+                .frame(width: 1, height: 1)
+        }
+        #endif
+        .onAppear {
+            if cursorIndex == nil { setCursor(0) }
+            #if os(iOS)
+            if !puzzle.locked { kbActive = true; kbTick += 1 }
+            #endif
+        }
         .onChange(of: puzzle.isFullySolved) { _, solved in
             if solved {
+                #if os(iOS)
+                kbActive = false  // dismiss the keyboard for the win overlay
+                #endif
                 withAnimation(.linear(duration: Double(n))) {
                     solveProgress = 1
                 } completion: {
@@ -123,10 +164,19 @@ struct HexGridEntryView: View {
         }
     }
 
+    /// Set the active cell. `cursorIndex` drives the ring on every platform; on macOS it
+    /// also mirrors into `@FocusState` so `onKeyPress` receives hardware keys.
+    private func setCursor(_ i: Int?) {
+        cursorIndex = i
+        #if os(macOS)
+        focused = i
+        #endif
+    }
+
     private func outlines(grid: HexGrid, s: Double, origin: HexPoint) -> some View {
         Canvas { ctx, _ in
             var mates = Path()
-            for i in puzzle.rowMates(of: focused) {
+            for i in puzzle.rowMates(of: cursorIndex) {
                 mates.addPath(hexPath(puzzle.order[i], grid, origin))
             }
             ctx.fill(mates, with: .color(rowMateFill))
@@ -134,7 +184,7 @@ struct HexGridEntryView: View {
             var focusPath: Path?
             for (i, c) in puzzle.order.enumerated() {
                 let hex = hexPath(c, grid, origin)
-                if i == focused {
+                if i == cursorIndex {
                     focusPath = hex
                 } else {
                     inactive.addPath(hex)
@@ -199,7 +249,12 @@ struct HexGridEntryView: View {
             position: CGPoint(x: CGFloat(c.x), y: CGFloat(c.y)),
             index: i, focus: $focused,
             onKey: { handle($0, i) },
-            onTap: { focused = cursor.didTap(i, in: puzzle) })
+            onTap: {
+                setCursor(cursor.didTap(i, in: puzzle))
+                #if os(iOS)
+                if !puzzle.locked { kbActive = true; kbTick += 1 }
+                #endif
+            })
     }
 
     private func hexPath(_ c: (q: Int, r: Int), _ grid: HexGrid, _ origin: HexPoint) -> Path {
@@ -221,6 +276,10 @@ struct HexGridEntryView: View {
         return a
     }
 
+    // MARK: - Input
+
+    /// Hardware-key handler (macOS only in practice — `.onKeyPress` is attached to cells
+    /// only on macOS). Routes into the shared cell logic at cell `i`.
     private func handle(_ press: KeyPress, _ i: Int) -> KeyPress.Result {
         // Historically solved puzzles are immutable at the view layer (the store rejects
         // writes for non-active counters too).
@@ -229,23 +288,47 @@ struct HexGridEntryView: View {
             press.key == .delete || press.key == .deleteForward
             || press.characters == "\u{8}" || press.characters == "\u{7F}"
         if delete {
-            if !puzzle.letters[i].isEmpty {
-                puzzle.letters[i] = ""
-            } else if let prev = cursor.backspaceTarget(from: i, in: puzzle) {
-                puzzle.letters[prev] = ""
-                focused = prev
-            }
-            onLettersChange(puzzle.letters)
+            deleteLetter(at: i)
             return .handled
         }
         if let ch = press.characters.first, ch.isLetter {
-            puzzle.letters[i] = String(ch.uppercased())
-            focused = cursor.didType(i, in: puzzle)
-            onLettersChange(puzzle.letters)
+            typeLetter(String(ch.uppercased()), at: i)
             return .handled
         }
         return .ignored
     }
+
+    /// Shared by the hardware-key handler (`handle`, macOS) and the software-keyboard
+    /// capture (iOS) so both input paths feed identical cell logic.
+    private func typeLetter(_ ch: String, at i: Int) {
+        guard !puzzle.locked else { return }
+        puzzle.letters[i] = ch
+        setCursor(cursor.didType(i, in: puzzle))
+        onLettersChange(puzzle.letters)
+    }
+
+    private func deleteLetter(at i: Int) {
+        guard !puzzle.locked else { return }
+        if !puzzle.letters[i].isEmpty {
+            puzzle.letters[i] = ""
+        } else if let prev = cursor.backspaceTarget(from: i, in: puzzle) {
+            puzzle.letters[prev] = ""
+            setCursor(prev)
+        }
+        onLettersChange(puzzle.letters)
+    }
+
+    #if os(iOS)
+    /// Software-keyboard entry: route each typed letter / backspace into the shared
+    /// cell logic at the currently active cell.
+    private func handleKeyboard(_ input: KeyboardCapture.Input) {
+        guard !puzzle.locked, let i = cursorIndex else { return }
+        switch input {
+        case .letter(let ch): typeLetter(ch, at: i)
+        case .delete: deleteLetter(at: i)
+        }
+    }
+    #endif
 }
 
 private struct HexCell: View {
@@ -260,6 +343,11 @@ private struct HexCell: View {
     let onTap: () -> Void
 
     var body: some View {
+        // Only one of these branches is compiled per platform, so `some View` stays
+        // concrete. On iOS cells are plain `Text` — they hold no SwiftUI focus, so the
+        // hidden text field's first responder is never stolen. macOS keeps
+        // `.focusable`/`.onKeyPress` for hardware-key input.
+        #if os(macOS)
         Text(letter)
             .font(.system(size: size, weight: .medium, design: .monospaced))
             .frame(width: w, height: h)
@@ -270,6 +358,14 @@ private struct HexCell: View {
             .onKeyPress(phases: .down, action: onKey)
             .onTapGesture(perform: onTap)  // tap → cursor infers direction
             .position(position)
+        #else
+        Text(letter)
+            .font(.system(size: size, weight: .medium, design: .monospaced))
+            .frame(width: w, height: h)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+            .position(position)
+        #endif
     }
 }
 
@@ -294,10 +390,16 @@ private struct ClueLabel: View {
 /// Pinch to zoom and drag to pan the board, the way UIScrollView does it: the zoom
 /// anchors at the pinch midpoint (the content under your fingers stays put), the drag
 /// flings with momentum and springs back within bounds, and cell taps stay instant.
-private struct Zoomable: ViewModifier {
+///
+/// This is a container `View` (not a `ViewModifier`) so its `@State` has a stable
+/// structural identity and survives the parent `GeometryReader`'s re-layouts (e.g. when
+/// the keyboard appears/disappears). Owning the zoom/pan state in a `ViewModifier`
+/// applied via `.modifier()` was unstable — it reset on every render.
+private struct ZoomableContainer<Content: View>: View {
     let viewport: CGSize
     var minZoom: CGFloat = 1
     var maxZoom: CGFloat = 3
+    @ViewBuilder let content: () -> Content
 
     @State private var zoom: CGFloat = 1
     @State private var pan: CGSize = .zero
@@ -321,7 +423,7 @@ private struct Zoomable: ViewModifier {
             height: Swift.min(maxY, Swift.max(-maxY, p.height)))
     }
 
-    func body(content: Content) -> some View {
+    var body: some View {
         let scale: CGFloat
         let offset: CGSize
         if let p = pinch {
@@ -334,7 +436,7 @@ private struct Zoomable: ViewModifier {
             scale = zoom
             offset = pan + drag
         }
-        return content
+        return content()
             .scaleEffect(scale, anchor: .center)
             .offset(offset)
             // `simultaneousGesture` so cell taps/focus are never blocked: a touch that
@@ -384,3 +486,66 @@ private func + (lhs: CGSize, rhs: CGSize) -> CGSize {
 private func * (vector: CGSize, scalar: CGFloat) -> CGSize {
     CGSize(width: vector.width * scalar, height: vector.height * scalar)
 }
+
+// MARK: - Software-keyboard capture (iOS)
+
+#if os(iOS)
+/// An invisible `UITextField` whose delegate reports each typed letter and each
+/// backspace — the only reliable way to read the on-screen keyboard (a SwiftUI
+/// `TextField`'s `onChange` can't tell a real backspace apart from a programmatic clear).
+/// It never stores text; every edit is rejected after being reported.
+private struct KeyboardCapture: UIViewRepresentable {
+    @Binding var active: Bool
+    let tick: Int
+    let onInput: (Input) -> Void
+
+    enum Input {
+        case letter(String)
+        case delete
+    }
+
+    func makeUIView(context: Context) -> CaptureField {
+        let f = CaptureField()
+        f.onInput = onInput
+        f.delegate = f
+        f.autocorrectionType = .no
+        f.autocapitalizationType = .allCharacters
+        f.spellCheckingType = .no
+        f.smartDashesType = .no
+        f.smartQuotesType = .no
+        f.smartInsertDeleteType = .no
+        f.keyboardType = .asciiCapable
+        f.alpha = 0.01
+        return f
+    }
+
+    func updateUIView(_ f: CaptureField, context: Context) {
+        f.onInput = onInput
+        if !active, f.isFirstResponder {
+            f.resignFirstResponder()
+        } else if active, f.lastTick != tick {
+            f.lastTick = tick
+            f.becomeFirstResponder()
+        } else if active, !f.isFirstResponder {
+            f.becomeFirstResponder()
+        }
+    }
+}
+
+private final class CaptureField: UITextField, UITextFieldDelegate {
+    var onInput: ((KeyboardCapture.Input) -> Void)?
+    var lastTick = 0
+
+    override var canBecomeFirstResponder: Bool { true }
+
+    func textField(_ tf: UITextField, shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
+        if string.isEmpty {
+            onInput?(.delete)  // backspace
+        } else if let ch = string.first, ch.isLetter {
+            onInput?(.letter(String(ch).uppercased()))
+        }
+        return false  // never accumulate text
+    }
+}
+#endif

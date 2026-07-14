@@ -89,18 +89,27 @@ final class PuzzleStore: ObservableObject {
     persist()
   }
 
-  /// Commit the active puzzle as solved: append the user's solution, clear the active
-  /// typing, advance to the next unsolved puzzle. No-op if the active letters don't
-  /// actually solve the puzzle (mirrors `HexPuzzle.isFullySolved`).
-  func markSolved() {
+  /// Record the active puzzle as solved the moment it's solved: append the user's
+  /// solution and clear the active typing. Does NOT advance the view — the player stays
+  /// on the solved board for the celebration, and `advance()` (the "Next Puzzle" button)
+  /// or the `›` control moves on. Recording at win-time (not button-time) means the solve
+  /// is never lost if the celebration is interrupted. No-op if the active letters don't
+  /// solve it, or if already recorded (`active` is then cleared). Mirrors
+  /// `HexPuzzle.isFullySolved`.
+  func registerSolved() {
     guard let lettersStr = progress.active[n],
       Self.solvesActive(in: progress, n: n, lettersString: lettersStr)
     else { return }
     progress.solutions[n, default: []].append(lettersStr)
     progress.active[n] = nil
     persist()
+  }
+
+  /// Move to the next unsolved puzzle (the "Next Puzzle" button).
+  func advance() {
     viewedCounter = activeCounter
   }
+
 
   // MARK: - Encoding (one ASCII char per cell; " " = empty)
 

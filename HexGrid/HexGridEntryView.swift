@@ -22,6 +22,7 @@ private let clueClearance: Double = 6.0
 struct HexGridEntryView: View {
 
   let n: Int
+  let onWin: () -> Void
   let onNext: () -> Void
   let onLettersChange: ([String]) -> Void
   @State private var puzzle: HexPuzzle
@@ -48,9 +49,11 @@ struct HexGridEntryView: View {
 
   init(
     n: Int, counter: Int, locked: Bool, initialLetters: [String],
-    onNext: @escaping () -> Void, onLettersChange: @escaping ([String]) -> Void
+    onWin: @escaping () -> Void, onNext: @escaping () -> Void,
+    onLettersChange: @escaping ([String]) -> Void
   ) {
     self.n = n
+    self.onWin = onWin
     self.onNext = onNext
     self.onLettersChange = onLettersChange
     _puzzle = State(
@@ -126,6 +129,7 @@ struct HexGridEntryView: View {
     }
     .onChange(of: puzzle.isFullySolved) { _, solved in
       if solved {
+        onWin()  // record the solve immediately; advancing is deferred to "Next Puzzle"
         #if os(iOS)
           kbActive = false  // dismiss the keyboard for the win overlay
         #endif

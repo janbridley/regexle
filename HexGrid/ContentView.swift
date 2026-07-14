@@ -10,7 +10,8 @@ struct ContentView: View {
       counter: store.viewedCounter,
       locked: store.viewedIsSolved,
       initialLetters: store.letters(for: store.n, counter: store.viewedCounter),
-      onNext: { store.markSolved() },
+      onWin: { store.registerSolved() },
+      onNext: { store.advance() },
       onLettersChange: { store.setLetters($0, forActiveOf: store.n) }
     )
     // Rebuild when either the size or the viewed counter changes: each (n, counter)
